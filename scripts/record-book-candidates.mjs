@@ -2,6 +2,8 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { readCsvFile, serializeCsv } from "./lib/csv.mjs";
+import { readJsonFile } from "./lib/json.mjs";
 import { normalizeDisplayTitle } from "./lib/title-normalization.mjs";
 
 const ROOT = process.cwd();
@@ -13,37 +15,6 @@ const inputPath = process.argv[2];
 if (!inputPath) {
   console.error("Usage: node scripts/record-book-candidates.mjs <candidates.json>");
   process.exit(1);
-}
-
-function parseCsvLine(line) {
-  const values = [];
-  let current = "";
-  let quoted = false;
-  for (let index = 0; index < line.length; index += 1) {
-    const char = line[index];
-    if (char === '"' && quoted && line[index + 1] === '"') { current += '"'; index += 1; }
-    else if (char === '"') quoted = !quoted;
-    else if (char === "," && !quoted) { values.push(current); current = ""; }
-    else current += char;
-  }
-  values.push(current);
-  return values;
-}
-
-function csvEscape(value) {
-  const text = String(value ?? "");
-  return /[",\n]/u.test(text) ? `"${text.replace(/"/gu, '""')}"` : text;
-}
-
-function readCsv(filePath) {
-  const text = fs.readFileSync(filePath, "utf8").trim();
-  const lines = text ? text.split(/\r?\n/u) : [];
-  const headers = parseCsvLine(lines.shift() || "");
-  const rows = lines.filter(Boolean).map((line) => {
-    const values = parseCsvLine(line);
-    return Object.fromEntries(headers.map((header, index) => [header, values[index] || ""]));
-  });
-  return { headers, rows };
 }
 
 function rowKey(row) {
@@ -81,12 +52,12 @@ function normalizeCandidate(candidate) {
 fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(PIPELINE_PATH)) fs.copyFileSync(EXAMPLE_PATH, PIPELINE_PATH);
 
-const example = readCsv(EXAMPLE_PATH);
-const current = readCsv(PIPELINE_PATH);
+const example = readCsvFile(EXAMPLE_PATH);
+const current = readCsvFile(PIPELINE_PATH);
 const headers = Array.from(new Set([...example.headers, ...current.headers]));
 const rows = current.rows.map((row) => Object.fromEntries(headers.map((header) => [header, row[header] || ""])));
 const byKey = new Map(rows.map((row, index) => [rowKey(row), index]));
-const payload = JSON.parse(fs.readFileSync(path.resolve(inputPath), "utf8"));
+const payload = readJsonFile(path.resolve(inputPath));
 const candidates = Array.isArray(payload) ? payload : payload.candidates;
 if (!Array.isArray(candidates)) throw new Error("Candidates JSON must be an array or an object with a candidates array");
 
@@ -110,7 +81,7 @@ for (const candidate of candidates) {
   updated += 1;
 }
 
-const output = `${[headers.join(","), ...rows.map((row) => headers.map((header) => csvEscape(row[header])).join(","))].join("\n")}\n`;
+const output = serializeCsv(headers, rows);
 const tempPath = `${PIPELINE_PATH}.${process.pid}.tmp`;
 try {
   fs.writeFileSync(tempPath, output, { mode: 0o600 });

@@ -13,6 +13,7 @@ import {
   validateCaptionTimings,
 } from "./body-timings.mjs";
 import { readPublishJson, validatePublishJsonAgainstManifest } from "./publish-json.mjs";
+import { readJsonFile } from "./json.mjs";
 import { readAndValidateRenderManifest, sha256File } from "./render-manifest.mjs";
 import { readScriptRows } from "./script-csv.mjs";
 import { validateBodyScript } from "./script-policy.mjs";
@@ -23,11 +24,7 @@ function assert(condition, message) {
 }
 
 function readJson(filePath) {
-  try {
-    return JSON.parse(fs.readFileSync(filePath, "utf8").replace(/^\uFEFF/u, ""));
-  } catch (error) {
-    throw new Error(`${filePath}: invalid JSON (${error.message})`);
-  }
+  return readJsonFile(filePath);
 }
 
 function requireFile(filePath, label) {
@@ -210,7 +207,10 @@ export function validateCompletedEpisode(root, episodeName, requestedVersion = "
   assert(manifests.length === 1, `Expected exactly one render manifest for ${episodeName}, found ${manifests.length}`);
   assert(videos.length === 1, `Expected exactly one final MP4 for ${episodeName}, found ${videos.length}`);
   const manifestPath = path.join(rendersDir, manifests[0]);
-  const manifestResult = readAndValidateRenderManifest(root, manifestPath);
+  const manifestResult = readAndValidateRenderManifest(root, manifestPath, {
+    verifyMedia: true,
+    probeMedia: options.mediaProbe,
+  });
   const { manifest } = manifestResult;
   assert(manifest.episode.name === episodeName, "render manifest episode.name does not match episode directory");
   assert(manifest.episode.scriptVersion === preflight.scriptVersion, "render manifest scriptVersion does not match active script");

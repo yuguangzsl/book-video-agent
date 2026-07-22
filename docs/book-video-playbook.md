@@ -13,7 +13,7 @@
    文案长度：推荐总计 18–20 行（含书名），硬上限 22 行（含书名）；正文 `script.csv` 最多 21 行、约 220 个汉字。文案写入临时 `script.csv` 后，必须先运行 `node scripts/validate-script.mjs "<book>"`；未通过时由 Agent 内部缩短，不能先发给用户确认，也不能等到配音或最终渲染阶段才处理。
 5. 图片制作：确认后生成 2-3 张 AI 氛围图和一张结果桥接图，记录提示词和来源。
 6. 音频制作：默认使用全局 `text-to-speech` Skill，通过 `node-edge-tts` 和 `zh-CN-YunxiNeural` 生成正文口播，语速 `-8%`、音调 `-2Hz`；用户明确选择其他声音、韵律或提供自己的音频时按用户选择处理。生成配音时建立独立的 TTS 输入副本，为缺少结尾标点的标题和正文单元补充明确句号并保存服务字幕 JSON，不修改对话中展示的 `《书名》` 或 `script.csv`。
-7. 时间轴制作：运行 `scripts/create-body-timings.mjs`；省略版本时自动从 `brief.json` 或 `script.csv` 识别活动版本。Agent 生成的音频使用 `node-edge-tts` 服务字幕 JSON 中的词边界，用户提供的音频才使用 ASR 或语音停顿作为时间参考；`script.csv` 始终是字幕真源。
+7. 配音与时间轴：Agent 生成配音时运行 `node scripts/prepare-body-voiceover.mjs "<book>" [script-version]`，脚本会同时保存 Edge TTS 词边界并生成 `body-timings.json`；用户提供音频时才单独运行 `scripts/create-body-timings.mjs`，以 ASR 或语音停顿作为回退参考。`script.csv` 始终是字幕真源。
 8. 对齐渲染：裁剪 BGM 到视频长度并完成混音；最终 MP4 同目录生成同名 `.manifest.json`，记录脚本版本、实际 BGM、混音参数、输入素材哈希和成片规格。
 9. 验收替换：检查画幅、时长、字幕、音频和模板连续性。新方案通过技术检查后覆盖旧方案，保持每期只有一套活动资产。
 10. 发布文案：最终渲染后、上传前研究同主题高互动样本，提炼标题和简介结构，生成 3 个原创标题候选、1 个选定简介和 3-5 个标签，并写入本地 `publish.json`。
@@ -128,7 +128,7 @@ episodes/<book>/
 
 1. 文案验证：请求用户确认前运行 `node scripts/validate-script.mjs "<book>"`。
 2. 单期成片验证：`node scripts/render-episode-final.mjs "<book>" [script-version]` 必须通过内置的字幕数量、脚本版本、`720x960` 画幅、音轨、时长和 manifest 检查，才能替换活动媒体。
-3. 仓库验证：修改可复用代码、模板、配置或已追踪素材后运行 `npm run check`；它验证仓库，不代替单期 MP4 验收。公开发布仓库前还要检查 Git 历史中的密钥、私人媒体和完整参考转录，并验证全新克隆初始化。
+3. 仓库验证：日常代码修改先运行无网络的 `npm run check:unit`；模板或媒体管线变化再运行 `npm run check:template`，`npm run check` 会依次聚合两者。它们验证仓库，不代替单期 MP4 验收。公开发布仓库前还要检查 Git 历史中的密钥、私人媒体和完整参考转录，并验证全新克隆初始化。
 
 ## 版权边界
 

@@ -52,15 +52,22 @@ try {
   const atomicTemp = path.join(dataDir, "book-pipeline.csv.2147483647.tmp");
   const unknownTemp = path.join(dataDir, "notes.tmp");
   const liveAtomicTemp = path.join(root, `.env.${process.pid}.tmp`);
+  const episodeAudioDir = path.join(root, "episodes", "测试书", "audio");
+  const timingAtomicTemp = path.join(episodeAudioDir, "body-timings.json.2147483646.tmp");
+  fs.mkdirSync(episodeAudioDir, { recursive: true });
   fs.writeFileSync(atomicTemp, "temporary");
   fs.writeFileSync(unknownTemp, "keep");
   fs.writeFileSync(liveAtomicTemp, "active");
+  fs.writeFileSync(timingAtomicTemp, "temporary timing");
   fs.utimesSync(atomicTemp, new Date(start), new Date(start));
   fs.utimesSync(liveAtomicTemp, new Date(start), new Date(start));
+  fs.utimesSync(timingAtomicTemp, new Date(start), new Date(start));
   const atomicResult = pruneKnownAtomicTempFiles(root, { now: start + 25 * hour, olderThanHours: 24 });
   assert.equal(atomicResult.removed.includes(path.join("data", path.basename(atomicTemp))), true);
+  assert.equal(atomicResult.removed.includes(path.join("episodes", "测试书", "audio", path.basename(timingAtomicTemp))), true);
   assert.equal(atomicResult.retained.includes(path.basename(liveAtomicTemp)), true);
   assert.equal(fs.existsSync(atomicTemp), false);
+  assert.equal(fs.existsSync(timingAtomicTemp), false);
   assert.equal(fs.existsSync(unknownTemp), true);
   assert.equal(fs.existsSync(liveAtomicTemp), true);
 

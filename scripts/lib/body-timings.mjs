@@ -132,7 +132,10 @@ export function buildEdgeSubtitleSegments(items, expectedTexts = null) {
 }
 
 export function buildCaptionTimings(orders, speechSegments, skipLeading = 1) {
-  const startIndex = Math.max(0, Number(skipLeading) || 0);
+  const startIndex = Number(skipLeading);
+  if (!Number.isInteger(startIndex) || startIndex < 0) {
+    throw new Error(`skipLeading must be a non-negative integer: ${skipLeading}`);
+  }
   const selected = speechSegments.slice(startIndex, startIndex + orders.length);
   if (selected.length !== orders.length) {
     throw new Error(
@@ -146,6 +149,22 @@ export function buildCaptionTimings(orders, speechSegments, skipLeading = 1) {
     start: roundSeconds(segment.start),
     end: roundSeconds(segment.end),
   }));
+}
+
+export function normalizeTimingOptions(options = {}) {
+  const skipLeading = Number(options.skipLeading ?? 1);
+  const silenceDuration = Number(options.silenceDuration ?? 0.18);
+  const noise = String(options.noise ?? "-35dB");
+  if (!Number.isInteger(skipLeading) || skipLeading < 0) {
+    throw new Error(`Invalid --skip-leading: ${options.skipLeading}`);
+  }
+  if (!Number.isFinite(silenceDuration) || silenceDuration <= 0) {
+    throw new Error(`Invalid --silence-duration: ${options.silenceDuration}`);
+  }
+  if (!/^-?\d+(?:\.\d+)?dB$/iu.test(noise)) {
+    throw new Error(`Invalid --noise: ${options.noise}`);
+  }
+  return { ...options, skipLeading, silenceDuration, noise };
 }
 
 export function validateCaptionTimings(captions, orders, duration) {

@@ -1,4 +1,4 @@
-import fs from "node:fs";
+import { readJsonFile } from "./json.mjs";
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -43,9 +43,7 @@ export function validatePublishJsonObject(data, filePath = "publish.json") {
 }
 
 export function readPublishJson(filePath) {
-  const raw = fs.readFileSync(filePath, "utf8").replace(/^\uFEFF/u, "");
-  const data = JSON.parse(raw);
-  return validatePublishJsonObject(data, filePath);
+  return validatePublishJsonObject(readJsonFile(filePath), filePath);
 }
 
 export function validatePublishJsonAgainstManifest(data, manifest, filePath = "publish.json") {

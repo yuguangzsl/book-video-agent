@@ -1,138 +1,15 @@
 #!/usr/bin/env node
 
-import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
-import { resolveCommand } from "./lib/command.mjs";
-import { copyDirectory, removeDirectory } from "./lib/filesystem.mjs";
+import { runCommandSync } from "./lib/command.mjs";
 
 const ROOT = process.cwd();
-const HYPERFRAMES_VERSION = "0.7.33";
-const requiredCommands = ["ffmpeg", "ffprobe", "npx"];
-const scriptFiles = [
-  "scripts/init.mjs",
-  "scripts/check-episode.mjs",
-  "scripts/cleanup-temp.mjs",
-  "scripts/download-whisper-model.mjs",
-  "scripts/record-book-candidates.mjs",
-  "scripts/create-body-timings.mjs",
-  "scripts/create-episode-preview.mjs",
-  "scripts/process-voiceover.mjs",
-  "scripts/render-episode-final.mjs",
-  "scripts/validate-script.mjs",
-  "scripts/lib/artifact-paths.mjs",
-  "scripts/lib/body-timings.mjs",
-  "scripts/lib/command.mjs",
-  "scripts/lib/episode-slug.mjs",
-  "scripts/lib/episode-checks.mjs",
-  "scripts/lib/env.mjs",
-  "scripts/lib/filesystem.mjs",
-  "scripts/lib/publish-json.mjs",
-  "scripts/lib/render-manifest.mjs",
-  "scripts/lib/script-csv.mjs",
-  "scripts/lib/script-policy.mjs",
-  "scripts/lib/script-version.mjs",
-  "scripts/lib/temp-lifecycle.mjs",
-  "scripts/lib/title-normalization.mjs",
-  "scripts/lib/weread-request.mjs",
-  "scripts/tests/test-artifact-paths.mjs",
-  "scripts/tests/test-body-timings.mjs",
-  "scripts/tests/test-command.mjs",
-  "scripts/tests/test-episode-checks.mjs",
-  "scripts/tests/test-filesystem.mjs",
-  "scripts/tests/test-init.mjs",
-  "scripts/tests/test-publish-json.mjs",
-  "scripts/tests/test-render-manifest.mjs",
-  "scripts/tests/test-temp-lifecycle.mjs",
-  "scripts/tests/test-title-normalization.mjs",
-];
 
-function commandArgs(command) {
-  if (command === "ffmpeg") return ["-hide_banner", "-h"];
-  if (command === "ffprobe") return ["-version"];
-  return ["--version"];
+for (const script of ["check-unit.mjs", "check-template.mjs"]) {
+  runCommandSync(process.execPath, [path.join(ROOT, "scripts", script)], {
+    cwd: ROOT,
+    stdio: "inherit",
+  });
 }
 
-function run(command, args, cwd = ROOT, options = {}) {
-  const resolved = resolveCommand(command, args);
-  return spawnSync(resolved.command, resolved.args, { cwd, encoding: "utf8", shell: false, ...options });
-}
-
-function requireCommand(command) {
-  const result = run(command, commandArgs(command), ROOT, { stdio: "ignore" });
-  if (result.status !== 0) throw new Error(`Missing or unusable required command: ${command}`);
-}
-
-for (const command of requiredCommands) requireCommand(command);
-for (const file of scriptFiles) {
-  const result = run(process.execPath, ["--check", file]);
-  if (result.status !== 0) throw new Error(`Syntax check failed: ${file}`);
-}
-
-const defaultIntroBooksPath = path.join(ROOT, "templates", "shared-video-template", "intro", "default-book-list.json");
-const defaultIntroBooks = JSON.parse(fs.readFileSync(defaultIntroBooksPath, "utf8"));
-if (
-  !Array.isArray(defaultIntroBooks)
-  || defaultIntroBooks.length !== 6
-  || defaultIntroBooks.some((book) => !book?.title || !book?.author)
-) {
-  throw new Error("Default intro book list must contain exactly six books with authors");
-}
-
-const test = run(process.execPath, ["scripts/tests/test-title-normalization.mjs"]);
-if (test.status !== 0) throw new Error(test.stderr || "Title normalization test failed");
-const timingTest = run(process.execPath, ["scripts/tests/test-body-timings.mjs"]);
-if (timingTest.status !== 0) throw new Error(timingTest.stderr || "Body timing test failed");
-const artifactPathTest = run(process.execPath, ["scripts/tests/test-artifact-paths.mjs"]);
-if (artifactPathTest.status !== 0) throw new Error(artifactPathTest.stderr || "Artifact path test failed");
-const envTest = run(process.execPath, ["scripts/tests/test-env.mjs"]);
-if (envTest.status !== 0) throw new Error(envTest.stderr || "Environment parsing test failed");
-const episodeCheckTest = run(process.execPath, ["scripts/tests/test-episode-checks.mjs"]);
-if (episodeCheckTest.status !== 0) throw new Error(episodeCheckTest.stderr || "Episode check test failed");
-const commandTest = run(process.execPath, ["scripts/tests/test-command.mjs"]);
-if (commandTest.status !== 0) throw new Error(commandTest.stderr || "Command resolution test failed");
-const filesystemTest = run(process.execPath, ["scripts/tests/test-filesystem.mjs"]);
-if (filesystemTest.status !== 0) throw new Error(filesystemTest.stderr || "Filesystem test failed");
-const initTest = run(process.execPath, ["scripts/tests/test-init.mjs"]);
-if (initTest.status !== 0) throw new Error(initTest.stderr || "Initialization test failed");
-const tempLifecycleTest = run(process.execPath, ["scripts/tests/test-temp-lifecycle.mjs"]);
-if (tempLifecycleTest.status !== 0) throw new Error(tempLifecycleTest.stderr || "Temporary lifecycle test failed");
-const renderManifestTest = run(process.execPath, ["scripts/tests/test-render-manifest.mjs"]);
-if (renderManifestTest.status !== 0) throw new Error(renderManifestTest.stderr || "Render manifest test failed");
-const publishJsonTest = run(process.execPath, ["scripts/tests/test-publish-json.mjs"]);
-if (publishJsonTest.status !== 0) throw new Error(publishJsonTest.stderr || "Publish JSON test failed");
-
-const templateSourceDir = path.join(ROOT, "templates", "shared-video-template", "intro");
-const templateRoot = fs.mkdtempSync(path.join(os.tmpdir(), "book-video-hyperframes-check-"));
-const templateDir = path.join(templateRoot, "intro");
-copyDirectory(templateSourceDir, templateDir);
-const resultPlaceholder = path.join(templateDir, "media", "pages", "result.png");
-const resultSource = path.join(templateDir, "media", "intro-background.jpg");
-const resultConversion = run("ffmpeg", [
-  "-hide_banner", "-loglevel", "error", "-y", "-i", resultSource, "-frames:v", "1", resultPlaceholder,
-]);
-if (resultConversion.status !== 0) {
-  removeDirectory(templateRoot);
-  throw new Error("Could not create temporary HyperFrames result placeholder");
-}
-
-try {
-  for (const command of ["lint", "validate", "inspect"]) {
-    const args = ["--yes", `hyperframes@${HYPERFRAMES_VERSION}`, command, "--json"];
-    if (command === "validate") args.push("--no-contrast");
-    if (command === "inspect") args.push("--at", "0.2,0.75,1.2,1.7,2.08,2.25,2.55,3.2,3.8,4.15");
-    args.push(templateDir);
-    const result = run("npx", args, ROOT, { stdio: "inherit" });
-    if (result.status !== 0) throw new Error(`HyperFrames ${command} failed`);
-  }
-} finally {
-  removeDirectory(templateRoot);
-}
-
-const modelPath = path.join(ROOT, "assets", "models", "whisper", "ggml-base.bin");
-if (!fs.existsSync(modelPath)) console.warn("Warning: Whisper model is not installed. Run node scripts/download-whisper-model.mjs before timing voiceover.");
-if (run("whisper-cli", ["--version"], ROOT, { stdio: "ignore" }).status !== 0) {
-  console.warn("Warning: whisper-cli is not installed. Voiceover timing will not be available until it is installed.");
-}
 console.log("book-video checks: ok");

@@ -15,3 +15,14 @@ export function copyDirectory(source, target) {
 export function removeDirectory(target) {
   fs.rmSync(target, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
 }
+
+export function writeFileAtomically(filePath, content, options = {}) {
+  const tempPath = `${filePath}.${process.pid}.tmp`;
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  try {
+    fs.writeFileSync(tempPath, content, options);
+    fs.renameSync(tempPath, filePath);
+  } finally {
+    if (fs.existsSync(tempPath)) fs.rmSync(tempPath, { force: true });
+  }
+}

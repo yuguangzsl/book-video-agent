@@ -182,20 +182,35 @@ try {
     }],
   }, null, 2)}\n`);
 
-  const completed = validateCompletedEpisode(root, episodeName, "", { requirePublish: true });
+  const mediaProbe = () => ({
+    durationSeconds: 6.48,
+    video: { codec: "h264", width: 720, height: 960, frameRate: 30 },
+    audio: { codec: "aac", sampleRate: 48000, channels: 2 },
+  });
+  const completed = validateCompletedEpisode(root, episodeName, "", { requirePublish: true, mediaProbe });
   assert.equal(completed.outputPath, outputPath);
   assert.deepEqual(completed.warnings, []);
   const delivery = formatCompletedEpisodeDelivery(completed);
   assert.match(delivery, /^\u89c6\u9891\u6587\u4ef6\u8def\u5f84：\[打开视频\]\(.+test-final\.mp4\)\n标题：标题一\n简介：简介$/u);
   write(outputPath, "changed video");
-  assert.throws(() => validateCompletedEpisode(root, episodeName), /output\.(bytes|sha256) does not match/);
+  assert.throws(() => validateCompletedEpisode(root, episodeName, "", { mediaProbe }), /output\.(bytes|sha256) does not match/);
   write(outputPath, "video");
+
+  assert.throws(
+    () => validateCompletedEpisode(root, episodeName, "", {
+      mediaProbe: () => ({ ...mediaProbe(), video: { ...mediaProbe().video, width: 1080 } }),
+    }),
+    /dimensions.*do not match actual MP4/u,
+  );
 
   write(path.join(episodeDir, "publish.json"), `${JSON.stringify({
     ...publish,
     inputs: { ...publish.inputs, renderSha256: "0".repeat(64) },
   }, null, 2)}\n`);
-  assert.throws(() => validateCompletedEpisode(root, episodeName), /renderSha256 does not match render manifest/);
+  assert.throws(
+    () => validateCompletedEpisode(root, episodeName, "", { mediaProbe }),
+    /renderSha256 does not match render manifest/,
+  );
 } finally {
   fs.rmSync(root, { recursive: true, force: true });
 }

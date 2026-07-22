@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { describeManifestFile } from "../lib/render-manifest.mjs";
+import { assertManifestMediaMatches, describeManifestFile } from "../lib/render-manifest.mjs";
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "book-video-manifest-test-"));
 const externalRoot = fs.mkdtempSync(path.join(os.tmpdir(), "book-video-manifest-external-"));
@@ -32,6 +32,21 @@ try {
   const outputRecord = describeManifestFile(root, candidateOutput, { referencePath: finalOutput });
   assert.equal(outputRecord.file, "episodes/book/renders/final.mp4");
   assert.equal(outputRecord.location, "project");
+
+  const media = {
+    durationSeconds: 12.34,
+    video: { codec: "h264", width: 720, height: 960, frameRate: 30 },
+    audio: { codec: "aac", sampleRate: 48000, channels: 2 },
+  };
+  assert.doesNotThrow(() => assertManifestMediaMatches(media, { ...media, durationSeconds: 12.35 }));
+  assert.throws(
+    () => assertManifestMediaMatches(media, { ...media, video: { ...media.video, width: 1080 } }),
+    /dimensions.*do not match actual MP4/u,
+  );
+  assert.throws(
+    () => assertManifestMediaMatches(media, { ...media, audio: { ...media.audio, sampleRate: 44100 } }),
+    /sample rate.*does not match actual MP4/u,
+  );
 } finally {
   fs.rmSync(root, { recursive: true, force: true });
   fs.rmSync(externalRoot, { recursive: true, force: true });

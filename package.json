@@ -4,7 +4,10 @@
   "type": "module",
   "scripts": {
     "check": "node scripts/check.mjs",
+    "check:unit": "node scripts/check-unit.mjs",
+    "check:template": "node scripts/check-template.mjs",
     "check:episode": "node scripts/check-episode.mjs",
+    "prepare:voiceover": "node scripts/prepare-body-voiceover.mjs",
     "cleanup:temp": "node scripts/cleanup-temp.mjs"
   }
 }

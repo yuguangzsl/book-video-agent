@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -12,4 +13,24 @@ export function resolveCommand(command, args = []) {
   return npxCli
     ? { command: process.execPath, args: [npxCli, ...args] }
     : { command, args };
+}
+
+export function spawnCommandSync(command, args = [], options = {}) {
+  const resolved = resolveCommand(command, args);
+  return spawnSync(resolved.command, resolved.args, {
+    encoding: "utf8",
+    ...options,
+    shell: false,
+  });
+}
+
+export function runCommandSync(command, args = [], options = {}) {
+  const result = spawnCommandSync(command, args, options);
+  if (result.status !== 0) {
+    const detail = result.error?.message
+      || String(result.stderr || result.stdout || "").trim()
+      || `status=${result.status ?? "unknown"}, signal=${result.signal || "none"}`;
+    throw new Error(`${command} failed: ${detail}`);
+  }
+  return result;
 }

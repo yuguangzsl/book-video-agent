@@ -1,6 +1,13 @@
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { spawnCommandSync } from "./command.mjs";
+import { readJsonFile } from "./json.mjs";
+import {
+  FINAL_DURATION_TOLERANCE_SECONDS,
+  VIDEO_HEIGHT,
+  VIDEO_WIDTH,
+} from "./project-constants.mjs";
 import {
   assertPortableProjectPath,
   resolveProjectPath,
@@ -33,6 +40,67 @@ export function describeManifestFile(root, filePath, options = {}) {
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
+}
+
+function parseFrameRate(value) {
+  const [numerator, denominator] = String(value || "0/1").split("/").map(Number);
+  return Number.isFinite(numerator) && Number.isFinite(denominator) && denominator !== 0
+    ? numerator / denominator
+    : 0;
+}
+
+export function probeMediaFile(filePath) {
+  const args = [
+    "-v", "error",
+    "-show_entries", "stream=codec_type,codec_name,width,height,avg_frame_rate,r_frame_rate,sample_rate,channels:format=duration",
+    "-of", "json",
+    filePath,
+  ];
+  const result = spawnCommandSync("ffprobe", args);
+  if (result.status !== 0) {
+    throw new Error(`ffprobe failed for ${filePath}: ${String(result.stderr || result.error?.message || "unknown error").trim()}`);
+  }
+  const probe = JSON.parse(result.stdout);
+  const video = probe.streams?.find((stream) => stream.codec_type === "video");
+  const audio = probe.streams?.find((stream) => stream.codec_type === "audio");
+  const duration = Number(probe.format?.duration);
+  assert(video, `ffprobe found no video stream: ${filePath}`);
+  assert(audio, `ffprobe found no audio stream: ${filePath}`);
+  assert(Number.isFinite(duration) && duration > 0, `ffprobe reported invalid duration for ${filePath}`);
+  const frameRate = parseFrameRate(video.avg_frame_rate) || parseFrameRate(video.r_frame_rate);
+  return {
+    durationSeconds: Number(duration.toFixed(2)),
+    video: {
+      codec: video.codec_name || "unknown",
+      width: Number(video.width || 0),
+      height: Number(video.height || 0),
+      frameRate: Number(frameRate.toFixed(3)),
+    },
+    audio: {
+      codec: audio.codec_name || "unknown",
+      sampleRate: Number(audio.sample_rate || 0),
+      channels: Number(audio.channels || 0),
+    },
+  };
+}
+
+export function assertManifestMediaMatches(output, actual, options = {}) {
+  const durationTolerance = options.durationTolerance ?? 0.02;
+  const frameRateTolerance = options.frameRateTolerance ?? 0.01;
+  assert(actual?.video?.width === output?.video?.width && actual?.video?.height === output?.video?.height,
+    `manifest video dimensions ${output?.video?.width || 0}x${output?.video?.height || 0} do not match actual MP4 ${actual?.video?.width || 0}x${actual?.video?.height || 0}`);
+  assert(actual.video.codec === output.video.codec,
+    `manifest video codec ${output.video.codec} does not match actual MP4 ${actual.video.codec}`);
+  assert(Math.abs(Number(actual.video.frameRate) - Number(output.video.frameRate)) <= frameRateTolerance,
+    `manifest frame rate ${output.video.frameRate} does not match actual MP4 ${actual.video.frameRate}`);
+  assert(actual?.audio?.codec === output?.audio?.codec,
+    `manifest audio codec ${output?.audio?.codec || "missing"} does not match actual MP4 ${actual?.audio?.codec || "missing"}`);
+  assert(actual.audio.sampleRate === output.audio.sampleRate,
+    `manifest audio sample rate ${output.audio.sampleRate} does not match actual MP4 ${actual.audio.sampleRate}`);
+  assert(actual.audio.channels === output.audio.channels,
+    `manifest audio channels ${output.audio.channels} do not match actual MP4 ${actual.audio.channels}`);
+  assert(Math.abs(Number(actual.durationSeconds) - Number(output.durationSeconds)) <= durationTolerance,
+    `manifest duration ${output.durationSeconds} does not match actual MP4 ${actual.durationSeconds}`);
 }
 
 function validateDescriptor(root, descriptor, field, options = {}) {
@@ -102,13 +170,16 @@ export function validateRenderManifest(root, manifest, options = {}) {
   assertPortableProjectPath(manifest.inputs.introTemplate, "inputs.introTemplate");
   const introTemplatePath = resolveProjectPath(root, manifest.inputs.introTemplate, "inputs.introTemplate");
   assert(fs.existsSync(introTemplatePath) && fs.statSync(introTemplatePath).isDirectory(), "inputs.introTemplate must reference an existing directory");
-  assert(manifest.output.video?.width === 720 && manifest.output.video?.height === 960, "render manifest output must be 720x960");
+  assert(
+    manifest.output.video?.width === VIDEO_WIDTH && manifest.output.video?.height === VIDEO_HEIGHT,
+    `render manifest output must be ${VIDEO_WIDTH}x${VIDEO_HEIGHT}`,
+  );
   assert(manifest.output.audio && Number(manifest.output.audio.channels) > 0, "render manifest output must have audio");
   assert(Number.isFinite(manifest.output.durationSeconds) && manifest.output.durationSeconds > 0, "render manifest duration must be positive");
   if (manifest.render?.maximumDurationSeconds !== null) {
     assert(
       Number.isFinite(manifest.render?.maximumDurationSeconds)
-      && manifest.output.durationSeconds <= manifest.render.maximumDurationSeconds + 0.05,
+      && manifest.output.durationSeconds <= manifest.render.maximumDurationSeconds + FINAL_DURATION_TOLERANCE_SECONDS,
       "render manifest duration exceeds the configured maximum",
     );
   }
@@ -119,7 +190,7 @@ export function validateRenderManifest(root, manifest, options = {}) {
 }
 
 export function readAndValidateRenderManifest(root, manifestPath, options = {}) {
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8").replace(/^\uFEFF/u, ""));
+  const manifest = readJsonFile(manifestPath);
   const result = validateRenderManifest(root, manifest, options);
   if (!options.skipManifestPathCheck) {
     assert(/\.mp4$/iu.test(manifest.output.file), "output.file must end with .mp4");
@@ -130,5 +201,12 @@ export function readAndValidateRenderManifest(root, manifestPath, options = {}) 
     );
     assert(path.resolve(manifestPath) === expectedManifestPath, `manifest filename does not match output.file: ${manifestPath}`);
   }
-  return { manifest, ...result };
+  let media = null;
+  if (options.verifyMedia) {
+    const outputPath = options.fileOverrides?.[manifest.output.file]
+      || resolveProjectPath(root, manifest.output.file, "output.file");
+    media = (options.probeMedia || probeMediaFile)(outputPath);
+    assertManifestMediaMatches(manifest.output, media, options);
+  }
+  return { manifest, media, ...result };
 }

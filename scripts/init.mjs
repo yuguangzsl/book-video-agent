@@ -5,9 +5,12 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { stdin as input, stdout as output } from "node:process";
-import { resolveCommand } from "./lib/command.mjs";
+import { spawnCommandSync } from "./lib/command.mjs";
+import { formatCsvRow, readCsvFile } from "./lib/csv.mjs";
 import { normalizeDisplayTitle } from "./lib/title-normalization.mjs";
 import { readEnvValue } from "./lib/env.mjs";
+import { readJsonFile } from "./lib/json.mjs";
+import { HYPERFRAMES_VERSION } from "./lib/project-constants.mjs";
 import { pruneProjectTempArtifacts } from "./lib/temp-lifecycle.mjs";
 
 const ROOT = process.cwd();
@@ -18,15 +21,13 @@ const STATE_PATH = path.join(ROOT, ".book-automation-state.json");
 const ENV_PATH = path.join(ROOT, ".env");
 const WHISPER_MODEL_PATH = path.join(ROOT, "assets", "models", "whisper", "ggml-base.bin");
 const MIN_WHISPER_MODEL_BYTES = 100 * 1024 * 1024;
-const HYPERFRAMES_VERSION = "0.7.33";
 const WEREAD_SKILLS_URL = "https://weread.qq.com/r/weread-skills";
 const VALID_MODES = new Set(["--check", "--apply", "--configure-weread"]);
 const REQUIRED_RUNTIME_CHECKS = ["node", "ffmpeg", "ffprobe", "npx", "whisper", "whisperModel"];
 
 function commandAvailable(command) {
   const args = command === "ffmpeg" ? ["-hide_banner", "-h"] : command === "ffprobe" ? ["-version"] : ["--version"];
-  const resolved = resolveCommand(command, args);
-  const result = spawnSync(resolved.command, resolved.args, { stdio: "ignore", shell: false });
+  const result = spawnCommandSync(command, args, { stdio: "ignore" });
   return result.status === 0;
 }
 
@@ -34,34 +35,6 @@ function fileExists(filePath, minimumBytes = 0) {
   if (!fs.existsSync(filePath)) return false;
   const stat = fs.statSync(filePath);
   return stat.isFile() && stat.size >= minimumBytes;
-}
-
-function parseCsvLine(line) {
-  const values = [];
-  let current = "";
-  let quoted = false;
-  for (let index = 0; index < line.length; index += 1) {
-    const char = line[index];
-    if (char === '"' && quoted && line[index + 1] === '"') { current += '"'; index += 1; }
-    else if (char === '"') quoted = !quoted;
-    else if (char === "," && !quoted) { values.push(current); current = ""; }
-    else current += char;
-  }
-  values.push(current);
-  return values;
-}
-
-function csvEscape(value) {
-  const text = String(value ?? "");
-  return /[",\n]/u.test(text) ? `"${text.replace(/"/gu, '""')}"` : text;
-}
-
-function csvRow(values) { return values.map(csvEscape).join(","); }
-
-function readCsv(filePath) {
-  const lines = fs.readFileSync(filePath, "utf8").trim().split(/\r?\n/u);
-  const headers = parseCsvLine(lines.shift() || "");
-  return { headers, rows: lines.filter(Boolean).map((line) => Object.fromEntries(headers.map((header, index) => [header, parseCsvLine(line)[index] || ""])))};
 }
 
 function secureLocalSecretFile(filePath) {
@@ -123,7 +96,7 @@ function readHidden(prompt) {
 function migratePipeline() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
   if (!fs.existsSync(PIPELINE_PATH)) { fs.copyFileSync(EXAMPLE_PATH, PIPELINE_PATH); return "created"; }
-  const { headers, rows } = readCsv(PIPELINE_PATH);
+  const { headers, rows } = readCsvFile(PIPELINE_PATH);
   if (!headers.length || !headers.includes("title")) return rows.length ? "ready" : "empty";
 
   const nextHeaders = headers.map((header) => header === "title" ? "source_title" : header === "bookId" ? "source_book_id" : header);
@@ -138,13 +111,13 @@ function migratePipeline() {
     delete output.title; delete output.bookId;
     return output;
   });
-  fs.writeFileSync(PIPELINE_PATH, `${[csvRow(nextHeaders), ...migrated.map((row) => csvRow(nextHeaders.map((header) => row[header] || "")))].join("\n")}\n`);
+  fs.writeFileSync(PIPELINE_PATH, `${[formatCsvRow(nextHeaders), ...migrated.map((row) => formatCsvRow(nextHeaders.map((header) => row[header] || "")))].join("\n")}\n`);
   return "migrated";
 }
 
 function readState() {
   if (!fs.existsSync(STATE_PATH)) return null;
-  try { return JSON.parse(fs.readFileSync(STATE_PATH, "utf8")); } catch { return null; }
+  try { return readJsonFile(STATE_PATH); } catch { return null; }
 }
 
 function collectChecks() {

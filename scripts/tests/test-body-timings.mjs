@@ -5,6 +5,7 @@ import {
   buildEdgeSubtitleSegments,
   buildSpeechSegments,
   coalesceSpeechSegments,
+  normalizeTimingOptions,
   parseSilenceEvents,
   validateCaptionTimings,
 } from "../lib/body-timings.mjs";
@@ -29,6 +30,15 @@ assert.deepEqual(coalesceSpeechSegments([
   { start: 2.6, end: 4.6 },
 ]);
 assert.throws(() => buildCaptionTimings([1, 2, 3], segments, 1), /Speech segment count mismatch/);
+assert.throws(() => buildCaptionTimings([1], segments, "bad"), /non-negative integer/u);
+assert.deepEqual(normalizeTimingOptions({ skipLeading: "0", silenceDuration: "0.2", noise: "-30dB" }), {
+  skipLeading: 0,
+  silenceDuration: 0.2,
+  noise: "-30dB",
+});
+assert.throws(() => normalizeTimingOptions({ skipLeading: "bad" }), /skip-leading/u);
+assert.throws(() => normalizeTimingOptions({ silenceDuration: "0" }), /silence-duration/u);
+assert.throws(() => normalizeTimingOptions({ noise: "quiet" }), /--noise/u);
 assert.deepEqual(buildEdgeSubtitleSegments([
   { part: "《书名》。", start: 100, end: 900 },
   { part: "第一", start: 1500, end: 1800 },

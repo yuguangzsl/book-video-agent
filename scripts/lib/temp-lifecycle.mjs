@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { removeDirectory } from "./filesystem.mjs";
+import { readJsonFile } from "./json.mjs";
 
 export const TEMP_METADATA_FILENAME = ".book-video-temp.json";
 export const TEMP_RETENTION_HOURS = Object.freeze({
@@ -58,7 +59,7 @@ function readMetadata(workspacePath) {
   const filePath = metadataPath(workspacePath);
   if (!fs.existsSync(filePath)) return null;
   try {
-    const metadata = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    const metadata = readJsonFile(filePath);
     return metadata?.managedBy === "book-video" && metadata?.schemaVersion === 1 ? metadata : null;
   } catch {
     return null;
@@ -188,6 +189,16 @@ export function pruneKnownAtomicTempFiles(root, options = {}) {
     { directory: path.resolve(root, "data"), pattern: /^book-pipeline\.csv\.(\d+)\.tmp$/u },
     { directory: path.resolve(root, "assets", "models", "whisper"), pattern: /^ggml-base\.bin\.(\d+)\.tmp$/u },
   ];
+  const episodesDir = path.resolve(root, "episodes");
+  if (fs.existsSync(episodesDir)) {
+    for (const entry of fs.readdirSync(episodesDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      locations.push({
+        directory: path.join(episodesDir, entry.name, "audio"),
+        pattern: /^body-timings\.json\.(\d+)\.tmp$/u,
+      });
+    }
+  }
 
   for (const { directory, pattern } of locations) {
     if (!fs.existsSync(directory)) continue;

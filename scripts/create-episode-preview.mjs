@@ -1,6 +1,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import { slugifyEpisodeName } from "./lib/episode-slug.mjs";
+import {
+  buildCaptionPresentationTiming,
+  wrapCaptionLines,
+} from "./lib/caption-layout.mjs";
+import { readJsonFile } from "./lib/json.mjs";
+import { HYPERFRAMES_VERSION, VIDEO_HEIGHT, VIDEO_WIDTH } from "./lib/project-constants.mjs";
+import { readScriptRows } from "./lib/script-csv.mjs";
 import { copyDirectory, removeDirectory } from "./lib/filesystem.mjs";
 import { resolveScriptVersion } from "./lib/script-version.mjs";
 import { validateBodyScript } from "./lib/script-policy.mjs";
@@ -41,39 +48,6 @@ const workDir = providedWorkDir
 const introDir = path.join(workDir, "intro");
 const bodyDir = path.join(workDir, "body");
 const defaultIntroBooksPath = path.join(ROOT, "templates", "shared-video-template", "intro", "default-book-list.json");
-const CAPTION_LEAD_SECONDS = 0.5;
-
-function readCsv(filePath) {
-  const text = fs.readFileSync(filePath, "utf8").trim();
-  const lines = text.split(/\r?\n/);
-  const headers = parseCsvLine(lines.shift());
-  return lines.map((line) => {
-    const values = parseCsvLine(line);
-    return Object.fromEntries(headers.map((header, index) => [header, values[index] ?? ""]));
-  });
-}
-
-function parseCsvLine(line) {
-  const values = [];
-  let current = "";
-  let quoted = false;
-  for (let index = 0; index < line.length; index += 1) {
-    const char = line[index];
-    if (char === '"' && quoted && line[index + 1] === '"') {
-      current += '"';
-      index += 1;
-    } else if (char === '"') {
-      quoted = !quoted;
-    } else if (char === "," && !quoted) {
-      values.push(current);
-      current = "";
-    } else {
-      current += char;
-    }
-  }
-  values.push(current);
-  return values;
-}
 
 function copyFile(src, dest) {
   fs.mkdirSync(path.dirname(dest), { recursive: true });
@@ -96,7 +70,7 @@ function esc(text) {
 function getTitleLayout(title) {
   const wrappedTitle = `《${title}》`;
   const fontSize = Math.max(46, Math.min(82, Math.floor(660 / Math.max(1, wrappedTitle.length + 1))));
-  const authorTop = fontSize >= 70 ? 166 : 140;
+  const authorTop = Math.max(150, 70 + Math.ceil(fontSize * 1.45));
   return { wrappedTitle, fontSize, authorTop };
 }
 
@@ -108,7 +82,7 @@ function getIntroBooks() {
   if (!fs.existsSync(defaultIntroBooksPath)) {
     throw new Error(`Missing fixed intro book list: ${defaultIntroBooksPath}`);
   }
-  const books = JSON.parse(fs.readFileSync(defaultIntroBooksPath, "utf8"));
+  const books = readJsonFile(defaultIntroBooksPath);
   if (!Array.isArray(books) || books.length !== 6 || books.some((book) => !book?.title || !book?.author)) {
     throw new Error("Fixed intro book list must contain exactly six real books with authors");
   }
@@ -116,27 +90,7 @@ function getIntroBooks() {
 }
 
 function wrapCaptionText(text, maxClauseChars = 12) {
-  const clauses = [];
-  let current = "";
-  for (const char of Array.from(String(text || "").trim())) {
-    current += char;
-    if (/[，。！？；：,.!?;:]/u.test(char)) {
-      clauses.push(current);
-      current = "";
-    }
-  }
-  if (current) clauses.push(current);
-
-  const lines = clauses.flatMap((clause) => {
-    const chars = Array.from(clause);
-    if (chars.length <= maxClauseChars) return [clause];
-    const chunkCount = Math.ceil(chars.length / maxClauseChars);
-    const chunkSize = Math.ceil(chars.length / chunkCount);
-    return Array.from({ length: chunkCount }, (_, index) =>
-      chars.slice(index * chunkSize, (index + 1) * chunkSize).join(""),
-    );
-  });
-  return lines.map((line) => esc(line)).join("<br />");
+  return wrapCaptionLines(text, maxClauseChars).map((line) => esc(line)).join("<br />");
 }
 
 function createIntro(brief) {
@@ -166,7 +120,7 @@ function createIntro(brief) {
 
 function readOptionalBodyTimings(version) {
   if (!fs.existsSync(audioTimingsPath)) return null;
-  const raw = JSON.parse(fs.readFileSync(audioTimingsPath, "utf8"));
+  const raw = readJsonFile(audioTimingsPath);
   if (raw.scriptVersion && raw.scriptVersion !== version) {
     console.warn(`Ignoring body timings for ${raw.scriptVersion}; current script version is ${version}`);
     return null;
@@ -192,13 +146,9 @@ function createBody(brief, rows, audioTimings) {
     const order = Number(row.order);
     const audioTiming = audioTimings?.byOrder.get(order);
     if (audioTiming) {
-      const speechStart = Math.max(0, Number(audioTiming.start));
-      const speechEnd = Math.max(speechStart + 0.8, Number(audioTiming.end));
-      const start = Math.max(0, speechStart - CAPTION_LEAD_SECONDS);
       return {
         selector: `.c${row.order}`,
-        start: Number(start.toFixed(2)),
-        hold: Number((Math.max(0.8, speechEnd - start)).toFixed(2)),
+        ...buildCaptionPresentationTiming(audioTiming),
       };
     }
     const duration = Number(row.duration_hint || 2);
@@ -229,7 +179,7 @@ function createBody(brief, rows, audioTimings) {
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=720, height=960" />
+    <meta name="viewport" content="width=${VIDEO_WIDTH}, height=${VIDEO_HEIGHT}" />
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
     <style>
       * { box-sizing: border-box; }
@@ -237,9 +187,9 @@ function createBody(brief, rows, audioTimings) {
       @font-face { font-family: "德意黑"; src: local("德意黑"), local("DeYiHei"), local("DeYi Hei"); }
       @font-face { font-family: "STHeiti"; src: local("STHeiti"), local("STHeitiSC-Medium"); }
       @font-face { font-family: "Hiragino Sans GB"; src: local("Hiragino Sans GB"); }
-      html, body { width: 720px; height: 960px; margin: 0; overflow: hidden; background: #000; }
+      html, body { width: ${VIDEO_WIDTH}px; height: ${VIDEO_HEIGHT}px; margin: 0; overflow: hidden; background: #000; }
       body { font-family: "DeYiHei", "德意黑", "STHeiti", "Hiragino Sans GB", sans-serif; color: #fff; }
-      #root { position: relative; width: 720px; height: 960px; overflow: hidden; background: #000; }
+      #root { position: relative; width: ${VIDEO_WIDTH}px; height: ${VIDEO_HEIGHT}px; overflow: hidden; background: #000; }
       .scene { position: absolute; inset: 0; opacity: 0; overflow: hidden; }
       .scene:first-of-type { opacity: 1; }
       .photo { position: absolute; inset: -22px; z-index: 1; background-size: cover; background-position: center; background-repeat: no-repeat; transform-origin: 50% 50%; will-change: transform; }
@@ -256,7 +206,7 @@ function createBody(brief, rows, audioTimings) {
     </style>
   </head>
   <body>
-    <main id="root" data-composition-id="main" data-start="0" data-duration="${safeDuration}" data-width="720" data-height="960">
+    <main id="root" data-composition-id="main" data-start="0" data-duration="${safeDuration}" data-width="${VIDEO_WIDTH}" data-height="${VIDEO_HEIGHT}">
       <section class="scene bridge" data-layout-ignore><div class="photo" data-layout-ignore></div></section>
       <section class="scene s1" data-layout-ignore><div class="photo" data-layout-ignore></div></section>
       <section class="scene s2" data-layout-ignore><div class="photo" data-layout-ignore></div></section>
@@ -300,8 +250,8 @@ ${revealJs}
         private: true,
         type: "module",
         scripts: {
-          check: "npx --yes hyperframes@0.7.33 lint && npx --yes hyperframes@0.7.33 validate && npx --yes hyperframes@0.7.33 inspect --at 0.8,4,8,12,18,24,30,36,42",
-          render: "npx --yes hyperframes@0.7.33 render --quality standard --output renders/body.mp4",
+          check: `npx --yes hyperframes@${HYPERFRAMES_VERSION} lint && npx --yes hyperframes@${HYPERFRAMES_VERSION} validate && npx --yes hyperframes@${HYPERFRAMES_VERSION} inspect --at 0.8,4,8,12,18,24,30,36,42`,
+          render: `npx --yes hyperframes@${HYPERFRAMES_VERSION} render --quality standard --output renders/body.mp4`,
         },
       },
       null,
@@ -311,10 +261,8 @@ ${revealJs}
 }
 
 try {
-  const brief = JSON.parse(fs.readFileSync(briefPath, "utf8"));
-  const rows = readCsv(scriptPath)
-    .filter((row) => row.version === version)
-    .sort((a, b) => Number(a.order) - Number(b.order));
+  const brief = readJsonFile(briefPath);
+  const rows = readScriptRows(scriptPath, version);
 
   if (!rows.length) throw new Error(`No script rows found for version ${version}`);
   const scriptValidation = validateBodyScript(rows);

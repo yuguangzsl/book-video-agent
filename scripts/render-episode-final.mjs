@@ -2,11 +2,21 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
-import { resolveCommand } from "./lib/command.mjs";
+import { runCommandSync } from "./lib/command.mjs";
+import { buildCaptionInspectTimes } from "./lib/caption-layout.mjs";
 import { validateEpisodeForRender } from "./lib/episode-checks.mjs";
-import { describeManifestFile, readAndValidateRenderManifest } from "./lib/render-manifest.mjs";
+import { describeManifestFile, probeMediaFile, readAndValidateRenderManifest } from "./lib/render-manifest.mjs";
 import { slugifyEpisodeName } from "./lib/episode-slug.mjs";
+import { replaceFilesWithRollback } from "./lib/file-transaction.mjs";
+import { readJsonFile } from "./lib/json.mjs";
+import {
+  FINAL_DURATION_TOLERANCE_SECONDS,
+  HYPERFRAMES_CHECK_TIMEOUT_MS,
+  HYPERFRAMES_VERSION,
+  MAX_FINAL_DURATION_SECONDS,
+  VIDEO_HEIGHT,
+  VIDEO_WIDTH,
+} from "./lib/project-constants.mjs";
 import { resolveScriptVersion } from "./lib/script-version.mjs";
 import {
   TEMP_RETENTION_HOURS,
@@ -16,7 +26,6 @@ import {
 } from "./lib/temp-lifecycle.mjs";
 
 const ROOT = process.cwd();
-const HYPERFRAMES_VERSION = "0.7.33";
 const INTRO_TRIM_SECONDS = 2.38;
 const INTRO_OFFSET_MS = Math.round(INTRO_TRIM_SECONDS * 1000);
 const FINAL_BGM_BASE_VOLUME = 0.32;
@@ -31,6 +40,7 @@ const INTRO_SCROLL_SFX_END_SECONDS = 2.38;
 const INTRO_SCROLL_SFX_FADE_OUT_SECONDS = 0.2;
 const INTRO_SCROLL_SFX_VOLUME = 1.4;
 const INTRO_SCROLL_SFX_PATH = path.join(ROOT, "assets", "sfx", "gear-scroll.mp3");
+const INTRO_INSPECT_TIMES = [0.2, 0.75, 1.2, 1.7, 2.08, 2.25, 2.55, 3.2, 3.8, 4.15];
 
 const [episodeName, requestedVersion, bgmInput] = process.argv.slice(2);
 
@@ -70,7 +80,6 @@ const rendersDir = path.join(episodeDir, "renders");
 const timingsPath = path.join(audioDir, "body-timings.json");
 const introVoice = path.join(ROOT, "assets", "template-audio", "intro-voiceover.mp3");
 const bodyVoice = path.join(audioDir, "body-voiceover.mp3");
-const bodyStoryVoice = path.join(audioDir, "body-voiceover-story.mp3");
 const bgmMixSuffix =
   FINAL_BGM_GAIN_DB === 0
     ? "bgm-standard"
@@ -84,6 +93,7 @@ let finalCandidateDir;
 let introVideo;
 let bodyVideo;
 let introStoryVoice;
+let bodyStoryVoice;
 let candidateOutputPath;
 let candidateManifestPath;
 const introScrollSfxDuration = Number((INTRO_SCROLL_SFX_END_SECONDS - INTRO_SCROLL_SFX_START_SECONDS).toFixed(2));
@@ -91,66 +101,65 @@ const introScrollSfxDelayMs = Math.round(INTRO_SCROLL_SFX_START_SECONDS * 1000);
 const introScrollSfxFadeOutStart = Number((introScrollSfxDuration - INTRO_SCROLL_SFX_FADE_OUT_SECONDS).toFixed(2));
 
 function run(command, args, options = {}) {
-  const resolved = resolveCommand(command, args);
-  const result = spawnSync(resolved.command, resolved.args, {
+  return runCommandSync(command, args, {
     cwd: options.cwd || ROOT,
     stdio: "inherit",
-    shell: false,
     env: options.env || process.env,
   });
-  if (result.status !== 0) throw new Error(`${command} failed with status ${result.status ?? "unknown"}`);
 }
 
-function probeVideo(filePath) {
-  const result = spawnSync(
-    "ffprobe",
-    ["-v", "error", "-show_entries", "stream=codec_type,codec_name,width,height,r_frame_rate,sample_rate,channels:format=duration", "-of", "json", filePath],
-    { cwd: ROOT, encoding: "utf8", shell: false },
-  );
-  if (result.status !== 0) {
-    throw new Error(`ffprobe failed for ${filePath}: ${result.stderr || "unknown error"}`);
-  }
-  const probe = JSON.parse(result.stdout);
-  const video = probe.streams?.find((stream) => stream.codec_type === "video");
-  const audio = probe.streams?.find((stream) => stream.codec_type === "audio");
-  const duration = Number(probe.format?.duration || 0);
-  if (!video || video.width !== 720 || video.height !== 960) {
-    throw new Error(`Invalid final video dimensions: ${video?.width || 0}x${video?.height || 0}`);
-  }
-  if (!audio) throw new Error("Final video has no audio stream");
-  if (!Number.isFinite(duration) || duration <= 0) throw new Error(`Invalid final duration: ${duration}`);
-  if (duration > 60.05 && !ALLOW_OVER_60_SECONDS) {
-    throw new Error(`Final video is ${duration.toFixed(2)}s; maximum is 60s`);
-  }
-  const [frameRateNumerator, frameRateDenominator] = String(video.r_frame_rate || "0/1").split("/").map(Number);
-  const frameRate = Number.isFinite(frameRateNumerator) && Number.isFinite(frameRateDenominator) && frameRateDenominator !== 0
-    ? frameRateNumerator / frameRateDenominator
-    : 0;
-  return {
-    durationSeconds: Number(duration.toFixed(2)),
-    video: {
-      codec: video.codec_name || "unknown",
-      width: video.width,
-      height: video.height,
-      frameRate: Number(frameRate.toFixed(3)),
-    },
-    audio: {
-      codec: audio.codec_name || "unknown",
-      sampleRate: Number(audio.sample_rate || 0),
-      channels: Number(audio.channels || 0),
-    },
+function validateHyperframesWorkspace(workspacePath, inspectTimes) {
+  const packageName = `hyperframes@${HYPERFRAMES_VERSION}`;
+  const env = {
+    ...process.env,
+    PRODUCER_PAGE_NAVIGATION_TIMEOUT_MS: String(HYPERFRAMES_CHECK_TIMEOUT_MS),
   };
+  run("npx", ["--yes", packageName, "lint", "--json", workspacePath], { env });
+  run("npx", [
+    "--yes", packageName, "validate", "--json", "--no-contrast",
+    "--timeout", String(HYPERFRAMES_CHECK_TIMEOUT_MS), workspacePath,
+  ], { env });
+  run("npx", [
+    "--yes", packageName, "inspect", "--json",
+    "--strict", "--timeout", String(HYPERFRAMES_CHECK_TIMEOUT_MS), "--at", inspectTimes.join(","), workspacePath,
+  ], { env });
 }
 
 function activateFinalRender(candidatePath, destinationPath, candidateManifest, destinationManifest) {
   fs.mkdirSync(rendersDir, { recursive: true });
-  fs.renameSync(candidatePath, destinationPath);
-  fs.renameSync(candidateManifest, destinationManifest);
   const activeFiles = new Set([destinationPath, destinationManifest]);
-  for (const entry of fs.readdirSync(rendersDir, { withFileTypes: true })) {
-    const entryPath = path.join(rendersDir, entry.name);
-    if (entry.isFile() && !activeFiles.has(entryPath)) fs.rmSync(entryPath, { force: true });
-  }
+  const staleFiles = fs.readdirSync(rendersDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && !activeFiles.has(path.join(rendersDir, entry.name)))
+    .map((entry) => path.join(rendersDir, entry.name));
+  const staleBackupDir = path.join(previewDir, "activation-backup", "stale-renders");
+  replaceFilesWithRollback([
+    { source: candidatePath, destination: destinationPath },
+    { source: candidateManifest, destination: destinationManifest },
+  ], path.join(previewDir, "activation-backup"), () => {
+    const movedStaleFiles = [];
+    try {
+      readAndValidateRenderManifest(ROOT, destinationManifest, { verifyMedia: true });
+      fs.mkdirSync(staleBackupDir, { recursive: true });
+      for (const stalePath of staleFiles) {
+        const backupPath = path.join(staleBackupDir, path.basename(stalePath));
+        fs.renameSync(stalePath, backupPath);
+        movedStaleFiles.push({ stalePath, backupPath });
+      }
+    } catch (error) {
+      const restoreFailures = [];
+      for (const item of movedStaleFiles.reverse()) {
+        try {
+          fs.renameSync(item.backupPath, item.stalePath);
+        } catch (restoreError) {
+          restoreFailures.push(`${item.stalePath}: ${restoreError.message}`);
+        }
+      }
+      if (restoreFailures.length) {
+        throw new Error(`${error.message}; stale render rollback also failed: ${restoreFailures.join(" | ")}`, { cause: error });
+      }
+      throw error;
+    }
+  });
 }
 
 function writeRenderManifest(filePath, mediaMetadata) {
@@ -171,7 +180,7 @@ function writeRenderManifest(filePath, mediaMetadata) {
       hyperframesVersion: HYPERFRAMES_VERSION,
       quality: "standard",
       introTrimSeconds: INTRO_TRIM_SECONDS,
-      maximumDurationSeconds: ALLOW_OVER_60_SECONDS ? null : 60,
+      maximumDurationSeconds: ALLOW_OVER_60_SECONDS ? null : MAX_FINAL_DURATION_SECONDS,
     },
     audioMix: {
       voicePreset: "story",
@@ -225,8 +234,8 @@ const preflight = validateEpisodeForRender(ROOT, episodeName, scriptVersion);
 for (const warning of preflight.warnings) console.warn(`Pre-render warning: ${warning}`);
 const bodyDuration = Number(preflight.timings.duration);
 const finalDuration = Number((INTRO_TRIM_SECONDS + bodyDuration).toFixed(2));
-if (finalDuration > 60 && !ALLOW_OVER_60_SECONDS) {
-  throw new Error(`Planned final duration is ${finalDuration.toFixed(2)}s; maximum is 60s`);
+if (finalDuration > MAX_FINAL_DURATION_SECONDS && !ALLOW_OVER_60_SECONDS) {
+  throw new Error(`Planned final duration is ${finalDuration.toFixed(2)}s; maximum is ${MAX_FINAL_DURATION_SECONDS}s`);
 }
 
 previewDir = createTempWorkspace(ROOT, {
@@ -242,6 +251,7 @@ finalCandidateDir = path.join(previewDir, "final");
 introVideo = path.join(introDir, "renders", "intro.mp4");
 bodyVideo = path.join(bodyDir, "renders", "body.mp4");
 introStoryVoice = path.join(previewDir, "audio", "intro-voiceover-story.mp3");
+bodyStoryVoice = path.join(previewDir, "audio", "body-voiceover-story.mp3");
 candidateOutputPath = path.join(finalCandidateDir, path.basename(outputPath));
 candidateManifestPath = path.join(finalCandidateDir, path.basename(manifestPath));
 
@@ -250,6 +260,8 @@ try {
   run("node", ["scripts/create-episode-preview.mjs", episodeName, scriptVersion], {
     env: { ...process.env, BOOK_VIDEO_WORK_DIR: previewDir },
   });
+  validateHyperframesWorkspace(introDir, INTRO_INSPECT_TIMES);
+  validateHyperframesWorkspace(bodyDir, buildCaptionInspectTimes(preflight.timings.captions, bodyDuration));
   fs.mkdirSync(finalCandidateDir, { recursive: true });
   run("node", ["scripts/process-voiceover.mjs", introVoice, introStoryVoice, "story"]);
   run("node", ["scripts/process-voiceover.mjs", bodyVoice, bodyStoryVoice, "story"]);
@@ -305,15 +317,20 @@ try {
     candidateOutputPath,
   ]);
 
-  const mediaMetadata = probeVideo(candidateOutputPath);
+  const mediaMetadata = probeMediaFile(candidateOutputPath);
+  if (mediaMetadata.video.width !== VIDEO_WIDTH || mediaMetadata.video.height !== VIDEO_HEIGHT) {
+    throw new Error(`Invalid final video dimensions: ${mediaMetadata.video.width}x${mediaMetadata.video.height}`);
+  }
+  if (mediaMetadata.durationSeconds > MAX_FINAL_DURATION_SECONDS + FINAL_DURATION_TOLERANCE_SECONDS && !ALLOW_OVER_60_SECONDS) {
+    throw new Error(`Final video is ${mediaMetadata.durationSeconds.toFixed(2)}s; maximum is ${MAX_FINAL_DURATION_SECONDS}s`);
+  }
   writeRenderManifest(candidateManifestPath, mediaMetadata);
-  const candidateManifest = JSON.parse(fs.readFileSync(candidateManifestPath, "utf8"));
+  const candidateManifest = readJsonFile(candidateManifestPath);
   readAndValidateRenderManifest(ROOT, candidateManifestPath, {
     skipManifestPathCheck: true,
     fileOverrides: { [candidateManifest.output.file]: candidateOutputPath },
   });
   activateFinalRender(candidateOutputPath, outputPath, candidateManifestPath, manifestPath);
-  readAndValidateRenderManifest(ROOT, manifestPath);
   try {
     removeTempWorkspace(ROOT, previewDir);
   } catch (cleanupError) {

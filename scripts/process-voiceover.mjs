@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import { spawnSync } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import { mkdirSync } from 'node:fs';
+import { spawnCommandSync } from './lib/command.mjs';
 
 const presets = {
   story: [
@@ -48,7 +48,7 @@ const args = [
   output,
 ];
 
-const result = spawnSync('ffmpeg', args, { stdio: 'inherit' });
+const result = spawnCommandSync('ffmpeg', args, { stdio: 'inherit' });
 if (result.status !== 0) {
   process.exit(result.status ?? 1);
 }
