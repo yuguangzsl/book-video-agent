@@ -112,6 +112,10 @@ for (const candidate of candidates) {
 
 const output = `${[headers.join(","), ...rows.map((row) => headers.map((header) => csvEscape(row[header])).join(","))].join("\n")}\n`;
 const tempPath = `${PIPELINE_PATH}.${process.pid}.tmp`;
-fs.writeFileSync(tempPath, output, { mode: 0o600 });
-fs.renameSync(tempPath, PIPELINE_PATH);
+try {
+  fs.writeFileSync(tempPath, output, { mode: 0o600 });
+  fs.renameSync(tempPath, PIPELINE_PATH);
+} finally {
+  if (fs.existsSync(tempPath)) fs.rmSync(tempPath, { force: true });
+}
 console.log(JSON.stringify({ added, updated, total: rows.length, path: PIPELINE_PATH }, null, 2));

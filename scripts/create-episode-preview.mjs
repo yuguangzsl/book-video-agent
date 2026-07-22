@@ -1,8 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
 import { slugifyEpisodeName } from "./lib/episode-slug.mjs";
+import { copyDirectory, removeDirectory } from "./lib/filesystem.mjs";
 import { resolveScriptVersion } from "./lib/script-version.mjs";
 import { validateBodyScript } from "./lib/script-policy.mjs";
+import {
+  TEMP_RETENTION_HOURS,
+  createTempWorkspace,
+  requireManagedTempWorkspace,
+  updateTempWorkspace,
+} from "./lib/temp-lifecycle.mjs";
 
 const ROOT = process.cwd();
 const [episodeName, requestedVersion] = process.argv.slice(2);
@@ -20,10 +27,21 @@ const imagesDir = path.join(episodeDir, "images");
 const audioTimingsPath = path.join(episodeDir, "audio", "body-timings.json");
 
 const workSlug = slugifyEpisodeName(episodeName);
-const workDir = path.join(ROOT, "tmp", `preview-${workSlug}`);
+const providedWorkDir = process.env.BOOK_VIDEO_WORK_DIR;
+const ownsWorkDir = !providedWorkDir;
+const workDir = providedWorkDir
+  ? requireManagedTempWorkspace(ROOT, providedWorkDir)
+  : createTempWorkspace(ROOT, {
+      kind: "preview",
+      label: workSlug,
+      owner: "create-episode-preview.mjs",
+      retentionHours: TEMP_RETENTION_HOURS.active,
+      details: { episode: episodeName, scriptVersion: version },
+    });
 const introDir = path.join(workDir, "intro");
 const bodyDir = path.join(workDir, "body");
 const defaultIntroBooksPath = path.join(ROOT, "templates", "shared-video-template", "intro", "default-book-list.json");
+const CAPTION_LEAD_SECONDS = 0.5;
 
 function readCsv(filePath) {
   const text = fs.readFileSync(filePath, "utf8").trim();
@@ -63,7 +81,7 @@ function copyFile(src, dest) {
 }
 
 function cleanDir(dir) {
-  fs.rmSync(dir, { recursive: true, force: true });
+  removeDirectory(dir);
   fs.mkdirSync(dir, { recursive: true });
 }
 
@@ -126,10 +144,9 @@ function createIntro(brief) {
   const titleLayout = getTitleLayout(displayTitle);
   const introBooks = getIntroBooks();
   fs.mkdirSync(introDir, { recursive: true });
-  fs.cpSync(
+  copyDirectory(
     path.join(ROOT, "templates", "shared-video-template", "intro", "media"),
     path.join(introDir, "media"),
-    { recursive: true },
   );
   copyFile(path.join(ROOT, "templates", "shared-video-template", "intro", "package.json"), path.join(introDir, "package.json"));
   let html = fs.readFileSync(path.join(ROOT, "templates", "shared-video-template", "intro", "index.html"), "utf8");
@@ -175,9 +192,14 @@ function createBody(brief, rows, audioTimings) {
     const order = Number(row.order);
     const audioTiming = audioTimings?.byOrder.get(order);
     if (audioTiming) {
-      const start = Math.max(0, Number(audioTiming.start));
-      const end = Math.max(start + 0.8, Number(audioTiming.end));
-      return { selector: `.c${row.order}`, start: Number(start.toFixed(2)), hold: Number((end - start).toFixed(2)) };
+      const speechStart = Math.max(0, Number(audioTiming.start));
+      const speechEnd = Math.max(speechStart + 0.8, Number(audioTiming.end));
+      const start = Math.max(0, speechStart - CAPTION_LEAD_SECONDS);
+      return {
+        selector: `.c${row.order}`,
+        start: Number(start.toFixed(2)),
+        hold: Number((Math.max(0.8, speechEnd - start)).toFixed(2)),
+      };
     }
     const duration = Number(row.duration_hint || 2);
     const item = { selector: `.c${row.order}`, start: Number(cursor.toFixed(2)), hold: Math.max(1.05, Number((duration - 0.42).toFixed(2))) };
@@ -288,21 +310,33 @@ ${revealJs}
   );
 }
 
-cleanDir(workDir);
+try {
+  const brief = JSON.parse(fs.readFileSync(briefPath, "utf8"));
+  const rows = readCsv(scriptPath)
+    .filter((row) => row.version === version)
+    .sort((a, b) => Number(a.order) - Number(b.order));
 
-const brief = JSON.parse(fs.readFileSync(briefPath, "utf8"));
-const rows = readCsv(scriptPath)
-  .filter((row) => row.version === version)
-  .sort((a, b) => Number(a.order) - Number(b.order));
+  if (!rows.length) throw new Error(`No script rows found for version ${version}`);
+  const scriptValidation = validateBodyScript(rows);
+  if (scriptValidation.errors.length) throw new Error(scriptValidation.errors.join("；"));
 
-if (!rows.length) {
-  console.error(`No script rows found for version ${version}`);
-  process.exit(1);
+  createIntro(brief);
+  createBody(brief, rows, readOptionalBodyTimings(version));
+  updateTempWorkspace(ROOT, workDir, {
+    status: ownsWorkDir ? "retained" : "active",
+    retentionHours: ownsWorkDir ? TEMP_RETENTION_HOURS.preview : TEMP_RETENTION_HOURS.active,
+    details: { stage: "preview-ready" },
+  });
+  console.log(workDir);
+} catch (error) {
+  try {
+    updateTempWorkspace(ROOT, workDir, {
+      status: "failed",
+      retentionHours: TEMP_RETENTION_HOURS.failed,
+      details: { stage: "preview", failure: String(error.message || error).slice(0, 500) },
+    });
+  } catch {
+    // Preserve the original preview error if lifecycle metadata cannot be updated.
+  }
+  throw error;
 }
-const scriptValidation = validateBodyScript(rows);
-if (scriptValidation.errors.length) throw new Error(scriptValidation.errors.join("；"));
-
-createIntro(brief);
-createBody(brief, rows, readOptionalBodyTimings(version));
-
-console.log(workDir);

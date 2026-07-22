@@ -51,6 +51,86 @@ export function coalesceSpeechSegments(segments, targetCount) {
   return result;
 }
 
+export function normalizeAlignmentText(value) {
+  return String(value || "").normalize("NFKC").replace(/[^\p{L}\p{N}]/gu, "");
+}
+
+export function assertTtsUnitsMatchScript(ttsUnits, scriptTexts, skipLeading = 1) {
+  const startIndex = Math.max(0, Number(skipLeading) || 0);
+  const bodyUnits = ttsUnits.slice(startIndex);
+  if (bodyUnits.length !== scriptTexts.length) {
+    throw new Error(`TTS body unit count mismatch: found ${bodyUnits.length}, need ${scriptTexts.length}`);
+  }
+  bodyUnits.forEach((unit, index) => {
+    if (normalizeAlignmentText(unit) !== normalizeAlignmentText(scriptTexts[index])) {
+      throw new Error(`TTS input unit ${index + 1} does not match script.csv row ${index + 1}`);
+    }
+  });
+}
+
+function buildTextAlignedSegments(items, expectedTexts) {
+  const characters = [];
+
+  for (const item of items || []) {
+    const start = Number(item?.start) / 1000;
+    const end = Number(item?.end) / 1000;
+    const text = normalizeAlignmentText(item?.part);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start || !text) continue;
+
+    const characterDuration = (end - start) / text.length;
+    [...text].forEach((character, index) => {
+      characters.push({
+        character,
+        start: start + characterDuration * index,
+        end: start + characterDuration * (index + 1),
+      });
+    });
+  }
+
+  const units = expectedTexts.map(normalizeAlignmentText);
+  if (units.some((unit) => !unit)) throw new Error("TTS input contains an empty text unit");
+
+  const observed = characters.map((item) => item.character).join("");
+  const expected = units.join("");
+  if (observed !== expected) {
+    throw new Error("Edge TTS word boundaries do not match the TTS input text");
+  }
+
+  let cursor = 0;
+  return units.map((unit) => {
+    const first = characters[cursor];
+    const last = characters[cursor + unit.length - 1];
+    cursor += unit.length;
+    return { start: first.start, end: last.end };
+  });
+}
+
+export function buildEdgeSubtitleSegments(items, expectedTexts = null) {
+  if (Array.isArray(expectedTexts) && expectedTexts.length) {
+    return buildTextAlignedSegments(items, expectedTexts);
+  }
+
+  const segments = [];
+  let current = null;
+
+  for (const item of items || []) {
+    const start = Number(item?.start) / 1000;
+    const end = Number(item?.end) / 1000;
+    const part = String(item?.part || "");
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) continue;
+    if (!current) current = { start, end };
+    else current.end = end;
+
+    if (/[。！？!?；;]\s*$/u.test(part)) {
+      segments.push(current);
+      current = null;
+    }
+  }
+
+  if (current) segments.push(current);
+  return segments;
+}
+
 export function buildCaptionTimings(orders, speechSegments, skipLeading = 1) {
   const startIndex = Math.max(0, Number(skipLeading) || 0);
   const selected = speechSegments.slice(startIndex, startIndex + orders.length);
@@ -66,4 +146,29 @@ export function buildCaptionTimings(orders, speechSegments, skipLeading = 1) {
     start: roundSeconds(segment.start),
     end: roundSeconds(segment.end),
   }));
+}
+
+export function validateCaptionTimings(captions, orders, duration) {
+  if (!Array.isArray(captions)) throw new Error("body-timings.json captions must be an array");
+  if (!Number.isFinite(duration) || duration <= 0) throw new Error("body-timings.json duration must be positive");
+  if (captions.length !== orders.length) {
+    throw new Error(`Caption timing count mismatch: found ${captions.length}, need ${orders.length}`);
+  }
+
+  let previousEnd = 0;
+  captions.forEach((caption, index) => {
+    const order = Number(caption?.order);
+    const start = Number(caption?.start);
+    const end = Number(caption?.end);
+    if (order !== Number(orders[index])) {
+      throw new Error(`Caption timing order mismatch at index ${index}: found ${order}, need ${orders[index]}`);
+    }
+    if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end <= start) {
+      throw new Error(`Caption timing ${order} has an invalid range: ${caption?.start}-${caption?.end}`);
+    }
+    if (start < previousEnd - 0.01) throw new Error(`Caption timing ${order} overlaps the previous caption`);
+    if (end > duration + 0.05) throw new Error(`Caption timing ${order} ends after the voiceover duration`);
+    previousEnd = end;
+  });
+  return captions;
 }

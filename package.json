@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node scripts/check.mjs"
+    "check": "node scripts/check.mjs",
+    "check:episode": "node scripts/check-episode.mjs",
+    "cleanup:temp": "node scripts/cleanup-temp.mjs"
   }
 }

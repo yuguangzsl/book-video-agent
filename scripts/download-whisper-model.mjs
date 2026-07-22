@@ -4,61 +4,51 @@ import fs from "node:fs";
 import https from "node:https";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { pipeline } from "node:stream/promises";
 
 const ROOT = process.cwd();
 const MODEL_URL = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin";
 const MODEL_PATH = path.join(ROOT, "assets", "models", "whisper", "ggml-base.bin");
 const MIN_BYTES = 100 * 1024 * 1024;
 
-function download(url, destination, redirects = 0) {
+async function download(url, destination, redirects = 0) {
   if (redirects > 5) throw new Error("Too many redirects while downloading Whisper model");
 
-  return new Promise((resolve, reject) => {
+  const response = await new Promise((resolve, reject) => {
     const request = https.get(url, (response) => {
-      if ([301, 302, 303, 307, 308].includes(response.statusCode || 0)) {
-        response.resume();
-        const nextUrl = response.headers.location;
-        if (!nextUrl) reject(new Error("Redirect without Location header"));
-        else resolve(download(new URL(nextUrl, url).toString(), destination, redirects + 1));
-        return;
-      }
-
-      if (response.statusCode !== 200) {
-        response.resume();
-        reject(new Error(`Download failed with HTTP ${response.statusCode}`));
-        return;
-      }
-
-      fs.mkdirSync(path.dirname(destination), { recursive: true });
-      const tempPath = `${destination}.${process.pid}.tmp`;
-      const file = fs.createWriteStream(tempPath);
-      let received = 0;
-      response.on("data", (chunk) => {
-        received += chunk.length;
-        if (process.stdout.isTTY) {
-          process.stdout.write(`\rDownloading ggml-base.bin ${(received / 1024 / 1024).toFixed(1)} MB`);
-        }
-      });
-      response.pipe(file);
-      file.on("finish", () => {
-        file.close(() => {
-          if (received < MIN_BYTES) {
-            fs.rmSync(tempPath, { force: true });
-            reject(new Error(`Downloaded file is too small: ${received} bytes`));
-            return;
-          }
-          fs.renameSync(tempPath, destination);
-          if (process.stdout.isTTY) process.stdout.write("\n");
-          resolve();
-        });
-      });
-      file.on("error", (error) => {
-        fs.rmSync(tempPath, { force: true });
-        reject(error);
-      });
+      resolve(response);
     });
     request.on("error", reject);
   });
+
+  if ([301, 302, 303, 307, 308].includes(response.statusCode || 0)) {
+    response.resume();
+    const nextUrl = response.headers.location;
+    if (!nextUrl) throw new Error("Redirect without Location header");
+    return download(new URL(nextUrl, url).toString(), destination, redirects + 1);
+  }
+  if (response.statusCode !== 200) {
+    response.resume();
+    throw new Error(`Download failed with HTTP ${response.statusCode}`);
+  }
+
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
+  const tempPath = `${destination}.${process.pid}.tmp`;
+  let received = 0;
+  response.on("data", (chunk) => {
+    received += chunk.length;
+    if (process.stdout.isTTY) {
+      process.stdout.write(`\rDownloading ggml-base.bin ${(received / 1024 / 1024).toFixed(1)} MB`);
+    }
+  });
+  try {
+    await pipeline(response, fs.createWriteStream(tempPath));
+    if (received < MIN_BYTES) throw new Error(`Downloaded file is too small: ${received} bytes`);
+    fs.renameSync(tempPath, destination);
+    if (process.stdout.isTTY) process.stdout.write("\n");
+  } finally {
+    if (fs.existsSync(tempPath)) fs.rmSync(tempPath, { force: true });
+  }
 }
 
 function installLocal(source, destination) {
@@ -66,26 +56,32 @@ function installLocal(source, destination) {
   if (fs.statSync(source).size < MIN_BYTES) throw new Error(`Local model is too small: ${source}`);
   fs.mkdirSync(path.dirname(destination), { recursive: true });
   const tempPath = `${destination}.${process.pid}.tmp`;
-  fs.copyFileSync(source, tempPath);
-  fs.renameSync(tempPath, destination);
+  try {
+    fs.copyFileSync(source, tempPath);
+    fs.renameSync(tempPath, destination);
+  } finally {
+    if (fs.existsSync(tempPath)) fs.rmSync(tempPath, { force: true });
+  }
 }
 
 function downloadThroughProxy(url, destination, proxy) {
   fs.mkdirSync(path.dirname(destination), { recursive: true });
   const tempPath = `${destination}.${process.pid}.tmp`;
-  const result = spawnSync("curl", [
-    "--fail", "--location", "--retry", "2", "--connect-timeout", "20",
-    "--proxy", proxy, "--output", tempPath, url,
-  ], { stdio: "inherit", shell: false });
-  if (result.status !== 0) {
-    fs.rmSync(tempPath, { force: true });
-    throw new Error(`Proxy download failed with status ${result.status ?? "unknown"}`);
+  try {
+    const result = spawnSync("curl", [
+      "--fail", "--location", "--retry", "2", "--connect-timeout", "20",
+      "--proxy", proxy, "--output", tempPath, url,
+    ], { stdio: "inherit", shell: false });
+    if (result.status !== 0) {
+      throw new Error(`Proxy download failed with status ${result.status ?? "unknown"}`);
+    }
+    if (!fs.existsSync(tempPath) || fs.statSync(tempPath).size < MIN_BYTES) {
+      throw new Error("Proxy download produced an incomplete Whisper model");
+    }
+    fs.renameSync(tempPath, destination);
+  } finally {
+    if (fs.existsSync(tempPath)) fs.rmSync(tempPath, { force: true });
   }
-  if (!fs.existsSync(tempPath) || fs.statSync(tempPath).size < MIN_BYTES) {
-    fs.rmSync(tempPath, { force: true });
-    throw new Error("Proxy download produced an incomplete Whisper model");
-  }
-  fs.renameSync(tempPath, destination);
 }
 
 function parseArgs(values) {

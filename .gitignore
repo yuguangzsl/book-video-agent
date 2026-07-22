@@ -8,6 +8,7 @@
 # Local candidate data
 data/book-pipeline.csv
 data/.book-pipeline-backup-*.csv
+data/generated-book-titles.txt
 
 # Do not publish downloaded reference videos or large local models
 assets/reference-videos/
