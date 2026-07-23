@@ -191,7 +191,10 @@ try {
   assert.equal(completed.outputPath, outputPath);
   assert.deepEqual(completed.warnings, []);
   const delivery = formatCompletedEpisodeDelivery(completed);
-  assert.match(delivery, /^\u89c6\u9891\u6587\u4ef6\u8def\u5f84：\[打开视频\]\(.+test-final\.mp4\)\n标题：标题一\n简介：简介$/u);
+  assert.match(
+    delivery,
+    /^\u89c6\u9891\u6587\u4ef6\u8def\u5f84：\[打开视频\]\(.+test-final\.mp4\)\n\n标题：\n```text\n标题一\n```\n\n简介：\n```text\n简介\n```$/u,
+  );
   write(outputPath, "changed video");
   assert.throws(() => validateCompletedEpisode(root, episodeName, "", { mediaProbe }), /output\.(bytes|sha256) does not match/);
   write(outputPath, "video");

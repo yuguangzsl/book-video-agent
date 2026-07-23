@@ -115,12 +115,20 @@ The path must be a directly clickable Markdown link. A preview is not a complete
 
 Whenever the user asks to output, list, or retrieve completed videos, including the latest creations, return only these three fields for each video in this exact order:
 
-```text
+````text
 视频文件路径：[打开视频](<absolute-local-video-path>)
-标题：<selected-title>
-简介：<selected-description>
+
+标题：
+```text
+<selected-title>
 ```
 
-Use one blank line between multiple videos. The video path must be a directly clickable Markdown link, never a plain path string. Read the selected title and description from `publish.json`. Do not embed the video or add headings, explanations, timestamps, technical metadata, alternative title candidates, recommendation labels, or tags unless the user explicitly requests them.
+简介：
+```text
+<selected-description>
+```
+````
+
+Render the title and description as separate fenced code blocks so the conversation UI provides one copy button for each field. Use one blank line between multiple videos. The video path must be a directly clickable Markdown link, never a plain path string. Read the selected title and description from `publish.json`. Do not embed the video or add headings, explanations, timestamps, technical metadata, alternative title candidates, recommendation labels, or tags unless the user explicitly requests them.
 
 Before producing or fixing a video, read `.agents/video-error-log.md` when it exists and enforce every recorded prevention check. When the user reports a new production error, append the symptom, root cause, prevention rule, and required verification before the next render.

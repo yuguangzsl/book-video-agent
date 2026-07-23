@@ -249,9 +249,15 @@ export function validateCompletedEpisode(root, episodeName, requestedVersion = "
 
 export function formatCompletedEpisodeDelivery(result) {
   assert(result.publish, `Missing publish.json: ${result.publishPath}`);
+  const copyBlock = (value) => {
+    const text = String(value).trim();
+    const longestBacktickRun = Math.max(0, ...(text.match(/`+/gu) || []).map((item) => item.length));
+    const fence = "`".repeat(Math.max(3, longestBacktickRun + 1));
+    return `${fence}text\n${text}\n${fence}`;
+  };
   return [
     `视频文件路径：[打开视频](${formatMarkdownLocalPath(result.outputPath)})`,
-    `标题：${result.publish.copy.selectedTitle}`,
-    `简介：${result.publish.copy.description}`,
-  ].join("\n");
+    `标题：\n${copyBlock(result.publish.copy.selectedTitle)}`,
+    `简介：\n${copyBlock(result.publish.copy.description)}`,
+  ].join("\n\n");
 }
