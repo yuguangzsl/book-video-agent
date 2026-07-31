@@ -9,7 +9,9 @@ import { describeManifestFile, probeMediaFile, readAndValidateRenderManifest } f
 import { slugifyEpisodeName } from "./lib/episode-slug.mjs";
 import { replaceFilesWithRollback } from "./lib/file-transaction.mjs";
 import { readJsonFile } from "./lib/json.mjs";
+import { assertEpisodeCanRenderForReplenishment } from "./lib/replenishment-batch.mjs";
 import {
+  EPISODE_IMAGE_FILENAMES,
   FINAL_DURATION_TOLERANCE_SECONDS,
   HYPERFRAMES_CHECK_TIMEOUT_MS,
   HYPERFRAMES_VERSION,
@@ -41,6 +43,8 @@ const INTRO_SCROLL_SFX_FADE_OUT_SECONDS = 0.2;
 const INTRO_SCROLL_SFX_VOLUME = 1.4;
 const INTRO_SCROLL_SFX_PATH = path.join(ROOT, "assets", "sfx", "gear-scroll.mp3");
 const INTRO_INSPECT_TIMES = [0.2, 0.75, 1.2, 1.7, 2.08, 2.25, 2.55, 3.2, 3.8, 4.15];
+const FIRST_FRAME_RATE = 30;
+const MAX_FIRST_FRAME_TITLE_HOLD_SECONDS = 3;
 
 const [episodeName, requestedVersion, bgmInput] = process.argv.slice(2);
 
@@ -48,6 +52,7 @@ if (!episodeName) {
   console.error("Usage: node scripts/render-episode-final.mjs <episode-name> [script-version] [bgm-file-or-name]");
   process.exit(1);
 }
+assertEpisodeCanRenderForReplenishment(ROOT, episodeName);
 
 function chooseRandomBgm() {
   const bgmDir = path.join(ROOT, "assets", "bgm");
@@ -73,7 +78,7 @@ const episodeDir = path.join(ROOT, "episodes", episodeName);
 const scriptVersion = resolveScriptVersion(episodeDir, requestedVersion);
 const briefPath = path.join(episodeDir, "brief.json");
 const scriptPath = path.join(episodeDir, "script.csv");
-const imagePaths = ["result-bridge.png", "atmosphere-1.png", "atmosphere-2.png", "atmosphere-3.png"]
+const imagePaths = EPISODE_IMAGE_FILENAMES
   .map((name) => path.join(episodeDir, "images", name));
 const audioDir = path.join(episodeDir, "audio");
 const rendersDir = path.join(episodeDir, "renders");
@@ -95,6 +100,7 @@ let bodyVideo;
 let introStoryVoice;
 let bodyStoryVoice;
 let candidateOutputPath;
+let candidateContentOutputPath;
 let candidateManifestPath;
 const introScrollSfxDuration = Number((INTRO_SCROLL_SFX_END_SECONDS - INTRO_SCROLL_SFX_START_SECONDS).toFixed(2));
 const introScrollSfxDelayMs = Math.round(INTRO_SCROLL_SFX_START_SECONDS * 1000);
@@ -181,6 +187,15 @@ function writeRenderManifest(filePath, mediaMetadata) {
       quality: "standard",
       introTrimSeconds: INTRO_TRIM_SECONDS,
       maximumDurationSeconds: ALLOW_OVER_60_SECONDS ? null : MAX_FINAL_DURATION_SECONDS,
+      ...(firstFrameTitleEnabled
+        ? {
+            firstFrameTitle: {
+              holdSeconds: firstFrameTitleHoldSeconds,
+              source: "body",
+              sourceSeconds: firstFrameTitleSourceSeconds,
+            },
+          }
+        : {}),
     },
     audioMix: {
       voicePreset: "story",
@@ -232,8 +247,38 @@ const bgmPath = getBgmPath(bgmArg);
 console.log(`Using BGM: ${path.basename(bgmPath)}`);
 const preflight = validateEpisodeForRender(ROOT, episodeName, scriptVersion);
 for (const warning of preflight.warnings) console.warn(`Pre-render warning: ${warning}`);
+const brief = readJsonFile(briefPath);
+const firstFrameTitleHoldSeconds = Number(brief.firstFrameTitleHoldSeconds || 0);
+const firstFrameTitleSourceSeconds = Number(brief.firstFrameTitleSourceSeconds || 0);
+if (
+  !Number.isFinite(firstFrameTitleHoldSeconds)
+  || firstFrameTitleHoldSeconds < 0
+  || firstFrameTitleHoldSeconds > MAX_FIRST_FRAME_TITLE_HOLD_SECONDS
+) {
+  throw new Error(
+    `brief.firstFrameTitleHoldSeconds must be between 0 and ${MAX_FIRST_FRAME_TITLE_HOLD_SECONDS}`,
+  );
+}
+if (!Number.isFinite(firstFrameTitleSourceSeconds) || firstFrameTitleSourceSeconds < 0) {
+  throw new Error("brief.firstFrameTitleSourceSeconds must be a non-negative number");
+}
+const firstFrameTitleEnabled = firstFrameTitleHoldSeconds > 0;
+const firstFrameDurationSeconds = Number((1 / FIRST_FRAME_RATE).toFixed(6));
+if (firstFrameTitleEnabled && firstFrameTitleHoldSeconds < firstFrameDurationSeconds) {
+  throw new Error(`brief.firstFrameTitleHoldSeconds must be at least ${firstFrameDurationSeconds} when enabled`);
+}
+const firstFrameSourceEndSeconds = Number(
+  (firstFrameTitleSourceSeconds + firstFrameDurationSeconds).toFixed(6),
+);
+const firstFrameStopPaddingSeconds = Number(
+  Math.max(0, firstFrameTitleHoldSeconds - firstFrameDurationSeconds).toFixed(6),
+);
 const bodyDuration = Number(preflight.timings.duration);
-const finalDuration = Number((INTRO_TRIM_SECONDS + bodyDuration).toFixed(2));
+if (firstFrameTitleEnabled && firstFrameSourceEndSeconds > bodyDuration) {
+  throw new Error("brief.firstFrameTitleSourceSeconds must identify a frame inside the body video");
+}
+const contentDuration = Number((INTRO_TRIM_SECONDS + bodyDuration).toFixed(2));
+const finalDuration = Number((firstFrameTitleHoldSeconds + contentDuration).toFixed(2));
 if (finalDuration > MAX_FINAL_DURATION_SECONDS && !ALLOW_OVER_60_SECONDS) {
   throw new Error(`Planned final duration is ${finalDuration.toFixed(2)}s; maximum is ${MAX_FINAL_DURATION_SECONDS}s`);
 }
@@ -253,6 +298,9 @@ bodyVideo = path.join(bodyDir, "renders", "body.mp4");
 introStoryVoice = path.join(previewDir, "audio", "intro-voiceover-story.mp3");
 bodyStoryVoice = path.join(previewDir, "audio", "body-voiceover-story.mp3");
 candidateOutputPath = path.join(finalCandidateDir, path.basename(outputPath));
+candidateContentOutputPath = firstFrameTitleEnabled
+  ? path.join(finalCandidateDir, `${slug}-content-before-first-frame.mp4`)
+  : candidateOutputPath;
 candidateManifestPath = path.join(finalCandidateDir, path.basename(manifestPath));
 
 try {
@@ -291,7 +339,7 @@ try {
       "[v0][v1]concat=n=2:v=1:a=0[v]",
       "[2:a]aresample=48000,volume=1.0[introa]",
       `[3:a]aresample=48000,adelay=${INTRO_OFFSET_MS}|${INTRO_OFFSET_MS},volume=1.0[bodya]`,
-      `[4:a]atrim=0:${finalDuration},asetpts=PTS-STARTPTS,aresample=48000,volume=${FINAL_BGM_VOLUME}[bgm]`,
+      `[4:a]atrim=0:${contentDuration},asetpts=PTS-STARTPTS,aresample=48000,volume=${FINAL_BGM_VOLUME}[bgm]`,
       `[5:a]atrim=0:${introScrollSfxDuration},asetpts=PTS-STARTPTS,aresample=48000,volume=${INTRO_SCROLL_SFX_VOLUME},afade=t=in:st=0:d=0.01,afade=t=out:st=${introScrollSfxFadeOutStart}:d=${INTRO_SCROLL_SFX_FADE_OUT_SECONDS},adelay=${introScrollSfxDelayMs}|${introScrollSfxDelayMs}[scrollsfx]`,
       "[introa][bodya][bgm][scrollsfx]amix=inputs=4:duration=longest:dropout_transition=0:normalize=0,alimiter=limit=0.95,loudnorm=I=-14.0:TP=-1.0:LRA=7.0,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo[a]",
     ].join(";"),
@@ -314,8 +362,58 @@ try {
     "-movflags",
     "+faststart",
     "-shortest",
-    candidateOutputPath,
+    candidateContentOutputPath,
   ]);
+
+  if (firstFrameTitleEnabled) {
+    const firstFrameContentSourceSeconds = Number(
+      (INTRO_TRIM_SECONDS + firstFrameTitleSourceSeconds).toFixed(6),
+    );
+    const firstFrameContentSourceEndSeconds = Number(
+      (firstFrameContentSourceSeconds + firstFrameDurationSeconds).toFixed(6),
+    );
+    run("ffmpeg", [
+      "-y",
+      "-i",
+      candidateContentOutputPath,
+      "-f",
+      "lavfi",
+      "-t",
+      String(firstFrameTitleHoldSeconds),
+      "-i",
+      "anullsrc=r=48000:cl=stereo",
+      "-filter_complex",
+      [
+        "[0:v]split=2[cover-source][content-source]",
+        `[cover-source]trim=${firstFrameContentSourceSeconds}:${firstFrameContentSourceEndSeconds},setpts=PTS-STARTPTS,tpad=stop_mode=clone:stop_duration=${firstFrameStopPaddingSeconds},fps=${FIRST_FRAME_RATE}[cover]`,
+        "[content-source]setpts=PTS-STARTPTS[content]",
+        "[cover][content]concat=n=2:v=1:a=0[v]",
+        "[1:a]asetpts=PTS-STARTPTS[first-frame-silence]",
+        "[0:a]asetpts=PTS-STARTPTS[content-audio]",
+        "[first-frame-silence][content-audio]concat=n=2:v=0:a=1[a]",
+      ].join(";"),
+      "-map",
+      "[v]",
+      "-map",
+      "[a]",
+      "-c:v",
+      "libx264",
+      "-pix_fmt",
+      "yuv420p",
+      "-profile:v",
+      "high",
+      "-level",
+      "4.1",
+      "-c:a",
+      "aac",
+      "-b:a",
+      "192k",
+      "-movflags",
+      "+faststart",
+      "-shortest",
+      candidateOutputPath,
+    ]);
+  }
 
   const mediaMetadata = probeMediaFile(candidateOutputPath);
   if (mediaMetadata.video.width !== VIDEO_WIDTH || mediaMetadata.video.height !== VIDEO_HEIGHT) {

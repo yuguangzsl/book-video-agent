@@ -4,6 +4,8 @@ import os from "node:os";
 import path from "node:path";
 import {
   formatCompletedEpisodeDelivery,
+  formatCompletedEpisodeFileLocation,
+  formatCompletedEpisodeMediaPreview,
   validateCompletedEpisode,
   validateEpisodeForRender,
 } from "../lib/episode-checks.mjs";
@@ -25,6 +27,7 @@ function write(filePath, content) {
 try {
   const briefPath = path.join(episodeDir, "brief.json");
   const scriptPath = path.join(episodeDir, "script.csv");
+  const promptsPath = path.join(episodeDir, "prompts.csv");
   const bodyVoicePath = path.join(audioDir, "body-voiceover.mp3");
   const edgePath = path.join(audioDir, "body-voiceover.edge-timings.json");
   const ttsInputPath = path.join(audioDir, "body-voiceover-input.txt");
@@ -39,6 +42,14 @@ try {
 
   write(briefPath, `${JSON.stringify({ display_title: episodeName, author: "作者", scriptVersion: "v1" })}\n`);
   write(scriptPath, "version,order,text\nv1,1,第一行。\nv1,2,第二行。\n");
+  write(
+    promptsPath,
+    "asset_id,purpose,prompt,generator,source,status\n"
+      + ["result-bridge", "atmosphere-1", "atmosphere-2", "atmosphere-3"]
+        .map((id) => `${id},purpose,prompt,imagegen,AI-generated,approved`)
+        .join("\n")
+      + "\n",
+  );
   write(bodyVoicePath, "voice");
   write(edgePath, `${JSON.stringify([
     { part: "《测试书》。", start: 0, end: 1000 },
@@ -156,9 +167,19 @@ try {
       scope: "test",
       popularVideoSampleStatus: "unavailable",
       notes: ["test"],
-      attempts: [],
+      attempts: [{
+        source: "test",
+        method: "test method",
+        observedAt: "2026-07-22T12:04:00+08:00",
+        status: "success",
+        reason: "test reason",
+      }],
       videoSamples: [],
-      fallbackSignals: [],
+      fallbackSignals: Array.from({ length: 5 }, (_, index) => ({
+        source: "test",
+        signal: `signal-${index}`,
+        value: index,
+      })),
       patterns: ["test"],
     },
     copy: {
@@ -170,31 +191,59 @@ try {
     },
   };
   write(path.join(episodeDir, "publish.json"), `${JSON.stringify(publish, null, 2)}\n`);
-  write(path.join(root, ".agents", "publish-queue.json"), `${JSON.stringify({
+  const queuePath = path.join(root, ".agents", "publish-queue.json");
+  const queue = {
     updatedAt: "2026-07-22T12:10:00+08:00",
     items: [{
+      position: 1,
       book: episodeName,
       videoPath: outputPath,
       title: publish.copy.selectedTitle,
       description: publish.copy.description,
       scriptVersion: "v1",
       renderSha256: manifest.output.sha256,
+      douyinStatus: "pending",
+      xiaohongshuStatus: "pending",
+      createdAt: "2026-07-22T12:10:00+08:00",
     }],
-  }, null, 2)}\n`);
+  };
+  write(queuePath, `${JSON.stringify(queue, null, 2)}\n`);
 
   const mediaProbe = () => ({
     durationSeconds: 6.48,
     video: { codec: "h264", width: 720, height: 960, frameRate: 30 },
     audio: { codec: "aac", sampleRate: 48000, channels: 2 },
   });
-  const completed = validateCompletedEpisode(root, episodeName, "", { requirePublish: true, mediaProbe });
+  const completed = validateCompletedEpisode(root, episodeName, "", {
+    requirePublish: true,
+    requireQueue: true,
+    mediaProbe,
+  });
   assert.equal(completed.outputPath, outputPath);
   assert.deepEqual(completed.warnings, []);
   const delivery = formatCompletedEpisodeDelivery(completed);
+  assert.throws(
+    () => formatCompletedEpisodeDelivery({ ...completed, queueItem: null }),
+    /requires a publication queue item re-read from disk/,
+  );
   assert.match(
     delivery,
-    /^\u89c6\u9891\u6587\u4ef6\u8def\u5f84：\[打开视频\]\(.+test-final\.mp4\)\n\n标题：\n```text\n标题一\n```\n\n简介：\n```text\n简介\n```$/u,
+    /^\u89c6\u9891\u6587\u4ef6\u8def\u5f84：\[打开视频\]\(<.+test-final\.mp4>\)\n\n标题：\n```text\n标题一\n```\n\n简介：\n```text\n简介\n```$/u,
   );
+  assert.match(
+    formatCompletedEpisodeMediaPreview(completed),
+    /^!\[预览视频\]\(<.+test-final\.mp4>\)$/u,
+  );
+  assert.match(
+    formatCompletedEpisodeFileLocation(completed),
+    /^文件位置：\[打开文件位置\]\(<.+renders>\)$/u,
+  );
+  fs.rmSync(queuePath);
+  assert.throws(
+    () => validateCompletedEpisode(root, episodeName, "", { requireQueue: true, mediaProbe }),
+    /Missing publication queue/,
+  );
+  write(queuePath, `${JSON.stringify(queue, null, 2)}\n`);
   write(outputPath, "changed video");
   assert.throws(() => validateCompletedEpisode(root, episodeName, "", { mediaProbe }), /output\.(bytes|sha256) does not match/);
   write(outputPath, "video");

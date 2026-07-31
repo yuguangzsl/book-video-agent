@@ -5,9 +5,28 @@
   "scripts": {
     "check": "node scripts/check.mjs",
     "check:unit": "node scripts/check-unit.mjs",
+    "check:assets": "node scripts/check-assets.mjs",
     "check:template": "node scripts/check-template.mjs",
     "check:episode": "node scripts/check-episode.mjs",
+    "stock:begin": "node scripts/manage-stock-replenishment.mjs begin",
+    "stock:status": "node scripts/manage-stock-replenishment.mjs status",
+    "stock:finalize": "node scripts/finalize-episode.mjs",
+    "stock:verify": "node scripts/manage-stock-replenishment.mjs verify",
+    "inventory:list": "node scripts/inspect-publish-queue.mjs",
+    "inventory:verify": "node scripts/inspect-publish-queue.mjs --verify",
+    "publish:brief": "node scripts/publish-browser.mjs brief",
+    "publish:start": "node scripts/publish-browser.mjs start",
+    "publish:status": "node scripts/publish-browser.mjs status",
+    "publish:confirm": "node scripts/publish-browser.mjs confirm",
+    "publish:verify": "node scripts/publish-browser.mjs verify",
+    "publish:record": "node scripts/publish-browser.mjs record",
+    "book:check": "node scripts/check-book-eligibility.mjs",
+    "cleanup:episodes": "node scripts/cleanup-episodes.mjs",
+    "preview:delivery": "node scripts/format-preview-delivery.mjs",
     "prepare:voiceover": "node scripts/prepare-body-voiceover.mjs",
     "cleanup:temp": "node scripts/cleanup-temp.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "1.58.2"
   }
 }

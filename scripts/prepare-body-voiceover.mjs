@@ -87,6 +87,7 @@ const scriptValidation = validateBodyScript(rows);
 if (scriptValidation.errors.length) throw new Error(scriptValidation.errors.join("；"));
 const displayTitle = brief.display_title || brief.displayTitle || brief.title;
 const ttsUnits = buildBodyTtsUnits(displayTitle, rows);
+const ttsRequestText = ttsUnits.join(" ");
 
 const workspace = createTempWorkspace(ROOT, {
   kind: "voiceover",
@@ -115,7 +116,7 @@ try {
   const args = [
     "--yes",
     NODE_EDGE_TTS_PACKAGE,
-    "-t", ttsUnits.join("\n"),
+    "-t", ttsRequestText,
     "-f", candidateAudio,
     "-v", ttsOptions.voice,
     "-l", ttsOptions.lang,

@@ -32,5 +32,5 @@ export function toPortableProjectPath(root, filePath, field = "path") {
 
 export function formatMarkdownLocalPath(filePath) {
   const portableAbsolutePath = path.resolve(filePath).split(path.sep).join("/");
-  return /\s/u.test(portableAbsolutePath) ? `<${portableAbsolutePath}>` : portableAbsolutePath;
+  return `<${portableAbsolutePath}>`;
 }

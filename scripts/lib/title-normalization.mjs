@@ -1,4 +1,5 @@
 const EDITION_SUFFIX = /^(\d{2,4}新版|新版|经典版|纪念版|修订版|完整版|全\d+册|电子书|精装版|平装版|典藏版|译者.*|出版社.*)$/u;
+const MARKETING_SUFFIX = /轻经典|果麦经典|畅销|大奖|入选|推荐|压轴之作|人民艺术家|全景式|血泪史|比《/u;
 
 export function normalizeDisplayTitle(sourceTitle, requestedTitle = "") {
   const preferred = String(requestedTitle || "").normalize("NFKC").replace(/[《》]/gu, "").trim();
@@ -12,7 +13,12 @@ export function normalizeDisplayTitle(sourceTitle, requestedTitle = "") {
   }
 
   const parenthetical = title.match(/^(.*?)[（(]([^（）()]*)[）)]$/u);
-  if (parenthetical && EDITION_SUFFIX.test(parenthetical[2].trim())) title = parenthetical[1].trim();
+  if (
+    parenthetical
+    && (EDITION_SUFFIX.test(parenthetical[2].trim()) || MARKETING_SUFFIX.test(parenthetical[2]))
+  ) {
+    title = parenthetical[1].trim();
+  }
 
   const colon = title.match(/^(.+?)[：:](.+)$/u);
   if (colon && /新版|纪念|修订|完整版|电子书|精装|平装|典藏|作品精选|[“”"]/u.test(colon[2])) {

@@ -20,7 +20,9 @@ episodes/book-slug/
 - `templates/` 维护共享视频代码和检查清单。
 - `episodes/` 只维护每本书自己的文案、配置和提示词。
 - 发布前至少研究 5 个可核验的相关样本，原创标题、简介、标签及研究口径写入本地 `publish.json`。
+- `prompts.csv` 必须包含 `result-bridge` 和三张 `atmosphere` 图片的 AI 生成提示，四行均需标记 `AI-generated` 与 `approved`。
 - 音频版必须确认口播匹配的 `script.csv` 版本。
 - 新方案生成成功后覆盖旧方案；文本历史交给 Git，媒体旧版不归档。
 - 当前只保留最新有效图片、音频和 render，错误版和过期预览及时删除。
 - Agent 生成的预览和渲染中间文件使用带 `.book-video-temp.json` 的唯一任务目录：预览保留 24 小时、失败任务保留 72 小时、最终成片成功后立即清理。A/B 对比文件只能临时放在 `tmp/`，确认选择后删除；未带生命周期标记的手工文件不会被自动清理。
+- 新建 episode 前运行 `npm run book:check -- "<display_title>"`；历史数据清理先运行 `npm run cleanup:episodes -- --dry-run`。

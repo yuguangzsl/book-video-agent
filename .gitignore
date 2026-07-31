@@ -17,6 +17,7 @@ assets/models/
 # Local episode outputs
 episodes/*
 !episodes/README.md
+/output.mp3
 
 # Local agent/plugin state
 .agents/

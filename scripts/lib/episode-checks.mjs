@@ -13,7 +13,10 @@ import {
   validateCaptionTimings,
 } from "./body-timings.mjs";
 import { readPublishJson, validatePublishJsonAgainstManifest } from "./publish-json.mjs";
+import { readPublishQueue, requirePublishQueueItem } from "./publish-queue.mjs";
 import { readJsonFile } from "./json.mjs";
+import { EPISODE_IMAGE_FILENAMES } from "./project-constants.mjs";
+import { readAndValidatePrompts } from "./prompts-csv.mjs";
 import { readAndValidateRenderManifest, sha256File } from "./render-manifest.mjs";
 import { readScriptRows } from "./script-csv.mjs";
 import { validateBodyScript } from "./script-policy.mjs";
@@ -21,6 +24,11 @@ import { resolveScriptVersion } from "./script-version.mjs";
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
+}
+
+function normalizeAbsolutePath(value) {
+  const normalized = path.resolve(value);
+  return process.platform === "win32" ? normalized.toLowerCase() : normalized;
 }
 
 function readJson(filePath) {
@@ -137,6 +145,7 @@ export function validateEpisodeForRender(root, episodeName, requestedVersion = "
   const scriptVersion = resolveScriptVersion(episodeDir, requestedVersion);
   const briefPath = requireFile(path.join(episodeDir, "brief.json"), "brief.json");
   const scriptPath = requireFile(path.join(episodeDir, "script.csv"), "script.csv");
+  const promptsPath = requireFile(path.join(episodeDir, "prompts.csv"), "prompts.csv");
   const timingsPath = requireFile(path.join(episodeDir, "audio", "body-timings.json"), "body-timings.json");
   const bodyVoicePath = requireFile(path.join(episodeDir, "audio", "body-voiceover.mp3"), "body voiceover");
   const rows = readScriptRows(scriptPath, scriptVersion);
@@ -146,6 +155,7 @@ export function validateEpisodeForRender(root, episodeName, requestedVersion = "
   );
   const scriptValidation = validateBodyScript(rows);
   assert(scriptValidation.errors.length === 0, scriptValidation.errors.join("；"));
+  readAndValidatePrompts(promptsPath);
   const timingResult = validateBodyTimingArtifact(root, timingsPath, scriptVersion, rows, {
     allowLegacy: options.allowLegacyTimings,
   });
@@ -154,7 +164,7 @@ export function validateEpisodeForRender(root, episodeName, requestedVersion = "
     timingResult.warnings.push("legacy timings reference a derived or different audio file; the existing manifest is checked, but a rerender requires regenerated timings");
   }
 
-  const imagePaths = ["result-bridge.png", "atmosphere-1.png", "atmosphere-2.png", "atmosphere-3.png"]
+  const imagePaths = EPISODE_IMAGE_FILENAMES
     .map((name) => requireFile(path.join(episodeDir, "images", name), name));
   const imageHashes = imagePaths.map(sha256File);
   assert(new Set(imageHashes).size === imageHashes.length, "Episode images contain duplicate file content");
@@ -163,36 +173,11 @@ export function validateEpisodeForRender(root, episodeName, requestedVersion = "
     episodeDir,
     episodeName,
     scriptVersion,
-    paths: { briefPath, scriptPath, timingsPath, bodyVoicePath, imagePaths },
+    paths: { briefPath, scriptPath, promptsPath, timingsPath, bodyVoicePath, imagePaths },
     rows,
     timings: timingResult.timings,
     warnings: timingResult.warnings,
   };
-}
-
-function normalizeAbsolutePath(value) {
-  const normalized = path.resolve(value);
-  return process.platform === "win32" ? normalized.toLowerCase() : normalized;
-}
-
-function validateQueueItem(root, episodeName, outputPath, manifest, publish) {
-  const queuePath = path.join(root, ".agents", "publish-queue.json");
-  if (!fs.existsSync(queuePath)) return [];
-  const queue = readJson(queuePath);
-  assert(Array.isArray(queue.items), `${queuePath}: items must be an array`);
-  const matches = queue.items.filter((item) => item?.book === episodeName);
-  assert(matches.length <= 1, `${queuePath}: duplicate queue entries for ${episodeName}`);
-  if (matches.length === 0) return [];
-  const item = matches[0];
-  assert(typeof item.videoPath === "string" && path.isAbsolute(item.videoPath), `${queuePath}: videoPath must be absolute`);
-  assert(normalizeAbsolutePath(item.videoPath) === normalizeAbsolutePath(outputPath), `${queuePath}: videoPath does not match render manifest`);
-  assert(item.scriptVersion === manifest.episode.scriptVersion, `${queuePath}: scriptVersion does not match render manifest`);
-  assert(String(item.renderSha256).toLowerCase() === manifest.output.sha256.toLowerCase(), `${queuePath}: renderSha256 does not match render manifest`);
-  if (publish) {
-    assert(item.title === publish.copy.selectedTitle, `${queuePath}: title does not match publish.json`);
-    assert(item.description === publish.copy.description, `${queuePath}: description does not match publish.json`);
-  }
-  return [];
 }
 
 export function validateCompletedEpisode(root, episodeName, requestedVersion = "", options = {}) {
@@ -234,9 +219,7 @@ export function validateCompletedEpisode(root, episodeName, requestedVersion = "
   } else if (options.requirePublish) {
     throw new Error(`Missing publish.json: ${publishPath}`);
   }
-  validateQueueItem(root, episodeName, outputPath, manifest, publish);
-
-  return {
+  const result = {
     ...preflight,
     manifest,
     manifestPath,
@@ -245,10 +228,19 @@ export function validateCompletedEpisode(root, episodeName, requestedVersion = "
     publishPath,
     warnings: [...preflight.warnings, ...manifestResult.warnings],
   };
+  let queueItem = null;
+  if (options.requireQueue) {
+    queueItem = requirePublishQueueItem(root, result);
+  } else if (options.validateQueue !== false) {
+    const queue = readPublishQueue(root);
+    if (queue?.items.some((item) => item.book === episodeName)) queueItem = requirePublishQueueItem(root, result);
+  }
+  return { ...result, queueItem };
 }
 
 export function formatCompletedEpisodeDelivery(result) {
   assert(result.publish, `Missing publish.json: ${result.publishPath}`);
+  assert(result.queueItem, "Formal delivery requires a publication queue item re-read from disk");
   const copyBlock = (value) => {
     const text = String(value).trim();
     const longestBacktickRun = Math.max(0, ...(text.match(/`+/gu) || []).map((item) => item.length));
@@ -257,7 +249,15 @@ export function formatCompletedEpisodeDelivery(result) {
   };
   return [
     `视频文件路径：[打开视频](${formatMarkdownLocalPath(result.outputPath)})`,
-    `标题：\n${copyBlock(result.publish.copy.selectedTitle)}`,
-    `简介：\n${copyBlock(result.publish.copy.description)}`,
+    `标题：\n${copyBlock(result.queueItem.title)}`,
+    `简介：\n${copyBlock(result.queueItem.description)}`,
   ].join("\n\n");
+}
+
+export function formatCompletedEpisodeMediaPreview(result) {
+  return `![预览视频](${formatMarkdownLocalPath(result.outputPath)})`;
+}
+
+export function formatCompletedEpisodeFileLocation(result) {
+  return `文件位置：[打开文件位置](${formatMarkdownLocalPath(path.dirname(result.outputPath))})`;
 }

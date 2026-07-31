@@ -4,6 +4,7 @@ import path from "node:path";
 import { spawnCommandSync } from "./command.mjs";
 import { readJsonFile } from "./json.mjs";
 import {
+  EPISODE_IMAGE_FILENAMES,
   FINAL_DURATION_TOLERANCE_SECONDS,
   VIDEO_HEIGHT,
   VIDEO_WIDTH,
@@ -147,7 +148,10 @@ export function validateRenderManifest(root, manifest, options = {}) {
     [manifest.inputs?.timings, "inputs.timings"],
     ...((manifest.inputs?.images || []).map((item, index) => [item, `inputs.images[${index}]`])),
   ];
-  assert(Array.isArray(manifest.inputs?.images) && manifest.inputs.images.length === 4, "render manifest must describe exactly four images");
+  assert(
+    Array.isArray(manifest.inputs?.images) && manifest.inputs.images.length === EPISODE_IMAGE_FILENAMES.length,
+    `render manifest must describe exactly ${EPISODE_IMAGE_FILENAMES.length} images`,
+  );
   for (const [descriptor, field] of [
     [manifest.output, "output"],
     [manifest.audioMix?.introVoice, "audioMix.introVoice"],
