@@ -23,6 +23,7 @@ import {
   buildBodyTtsUnits,
   edgeSubtitleOutputPath,
 } from "./lib/voiceover-preparation.mjs";
+import { resolveBriefDisplayTitle } from "./lib/brief-display-title.mjs";
 
 const ROOT = process.cwd();
 const NODE_EDGE_TTS_PACKAGE = "node-edge-tts@1.2.10";
@@ -85,7 +86,7 @@ const scriptVersion = resolveScriptVersion(episodeDir, requestedVersion);
 const rows = readScriptRows(scriptPath, scriptVersion);
 const scriptValidation = validateBodyScript(rows);
 if (scriptValidation.errors.length) throw new Error(scriptValidation.errors.join("；"));
-const displayTitle = brief.display_title || brief.displayTitle || brief.title;
+const displayTitle = resolveBriefDisplayTitle(brief, episodeName);
 const ttsUnits = buildBodyTtsUnits(displayTitle, rows);
 const ttsRequestText = ttsUnits.join(" ");
 

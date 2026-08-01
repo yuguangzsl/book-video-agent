@@ -17,6 +17,7 @@ import {
   requireManagedTempWorkspace,
   updateTempWorkspace,
 } from "./lib/temp-lifecycle.mjs";
+import { resolveBriefDisplayTitle } from "./lib/brief-display-title.mjs";
 
 const ROOT = process.cwd();
 const [episodeName, requestedVersion] = process.argv.slice(2);
@@ -75,7 +76,7 @@ function getTitleLayout(title) {
 }
 
 function getDisplayTitle(brief) {
-  return brief.display_title || brief.displayTitle || brief.title;
+  return resolveBriefDisplayTitle(brief, path.basename(episodeDir));
 }
 
 function getIntroBooks() {
