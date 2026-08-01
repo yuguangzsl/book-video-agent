@@ -20,6 +20,7 @@ import {
   VIDEO_WIDTH,
 } from "./lib/project-constants.mjs";
 import { resolveScriptVersion } from "./lib/script-version.mjs";
+import { resolveFirstFrameTitleConfig } from "./lib/first-frame-title.mjs";
 import {
   TEMP_RETENTION_HOURS,
   createTempWorkspace,
@@ -248,8 +249,9 @@ console.log(`Using BGM: ${path.basename(bgmPath)}`);
 const preflight = validateEpisodeForRender(ROOT, episodeName, scriptVersion);
 for (const warning of preflight.warnings) console.warn(`Pre-render warning: ${warning}`);
 const brief = readJsonFile(briefPath);
-const firstFrameTitleHoldSeconds = Number(brief.firstFrameTitleHoldSeconds || 0);
-const firstFrameTitleSourceSeconds = Number(brief.firstFrameTitleSourceSeconds || 0);
+const firstFrameTitle = resolveFirstFrameTitleConfig(brief);
+const firstFrameTitleHoldSeconds = Number(firstFrameTitle.holdSeconds);
+const firstFrameTitleSourceSeconds = Number(firstFrameTitle.sourceSeconds);
 if (
   !Number.isFinite(firstFrameTitleHoldSeconds)
   || firstFrameTitleHoldSeconds < 0
