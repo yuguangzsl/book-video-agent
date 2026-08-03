@@ -15,6 +15,7 @@
     "inventory:list": "node scripts/inspect-publish-queue.mjs",
     "inventory:verify": "node scripts/inspect-publish-queue.mjs --verify",
     "publish:brief": "node scripts/publish-browser.mjs brief",
+    "publish:xiaohongshu": "node scripts/publish-xiaohongshu-manual.mjs",
     "publish:start": "node scripts/publish-browser.mjs start",
     "publish:status": "node scripts/publish-browser.mjs status",
     "publish:confirm": "node scripts/publish-browser.mjs confirm",

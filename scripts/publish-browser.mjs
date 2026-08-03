@@ -22,10 +22,10 @@ import {
   platformPrepareFunction,
   platformPublishFunction,
   verifyDouyinPublishedWork,
-  verifyXiaohongshuPublishedWork,
   waitForPlatformLogin,
 } from "./lib/platform-publishers.mjs";
 import { markPublishQueuePlatformPublished } from "./lib/publish-queue.mjs";
+import { assertBrowserAutomationPlatforms } from "./lib/publication-policy.mjs";
 
 const ROOT = process.cwd();
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
@@ -66,13 +66,13 @@ function parseArgs(argv) {
 }
 
 function parsePlatforms(value) {
-  const platforms = String(value || "douyin,xiaohongshu")
+  const platforms = String(value || "douyin")
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
   assert(platforms.length > 0, "At least one platform is required");
   assert(platforms.every((platform) => PUBLISH_PLATFORMS.includes(platform)), `Unsupported platforms: ${platforms.join(", ")}`);
-  return [...new Set(platforms)];
+  return assertBrowserAutomationPlatforms([...new Set(platforms)]);
 }
 
 function parseAccounts(args) {
@@ -172,6 +172,7 @@ async function capturePublicationProof(page, sessionId, platform) {
 }
 
 async function preparePlatform(page, session, platform) {
+  assertBrowserAutomationPlatforms([platform]);
   updatePublicationPlatform(ROOT, session.id, platform, {
     status: "opening",
     pageUrl: "",
@@ -224,6 +225,7 @@ function revalidatePreparedRelease(session, platform) {
 }
 
 async function publishPlatform(page, sessionId, platform) {
+  assertBrowserAutomationPlatforms([platform]);
   let session = readPublicationSession(ROOT, sessionId);
   const confirmation = readPublicationConfirmation(ROOT, sessionId, platform);
   assert(confirmation, `Missing final confirmation for ${platform}`);
@@ -258,9 +260,7 @@ async function publishPlatform(page, sessionId, platform) {
     proof: acceptedProof,
     action: "Platform accepted the submission; verifying the official list",
   });
-  const verify = platform === "douyin"
-    ? verifyDouyinPublishedWork
-    : verifyXiaohongshuPublishedWork;
+  const verify = verifyDouyinPublishedWork;
   let proof;
   try {
     proof = {
@@ -347,6 +347,7 @@ async function publishPlatform(page, sessionId, platform) {
 
 async function runWorker(sessionId) {
   let session = readPublicationSession(ROOT, sessionId);
+  assertBrowserAutomationPlatforms(session.requestedPlatforms);
   updatePublicationSession(ROOT, session.id, (next) => ({
     ...next,
     worker: { pid: process.pid, startedAt: new Date().toISOString() },
@@ -498,6 +499,7 @@ function recordPublishedPlatform(sessionId, platform, expectedRenderSha256) {
 
 async function verifyPublishedPlatform(sessionId, platform) {
   assert(PUBLISH_PLATFORMS.includes(platform), `Unsupported publication verification platform: ${platform}`);
+  assertBrowserAutomationPlatforms([platform]);
   const session = readPublicationSession(ROOT, sessionId);
   const state = session.platforms[platform];
   const revalidatingTestProof = session.repostTest === true && state.status === "published";
@@ -538,9 +540,7 @@ async function verifyPublishedPlatform(sessionId, platform) {
       args: ["--start-maximized", "--no-first-run", "--no-default-browser-check"],
     });
     const page = context.pages()[0] || await context.newPage();
-    const verify = platform === "douyin"
-      ? verifyDouyinPublishedWork
-      : verifyXiaohongshuPublishedWork;
+    const verify = verifyDouyinPublishedWork;
     let proof = {
       ...(state.proof || {}),
       ...await verify(page, session.brief, session.accounts[platform], {
@@ -618,10 +618,10 @@ function usage() {
   return [
     "Usage:",
     "  node scripts/publish-browser.mjs brief --position <n>",
-    "  node scripts/publish-browser.mjs start --position <n> [--platforms douyin,xiaohongshu] [--repost-test] --douyin-account-name <name> --douyin-account-id <id> --xiaohongshu-account-name <name> --xiaohongshu-account-id <id>",
+    "  node scripts/publish-browser.mjs start --position <n> [--platforms douyin] [--repost-test] --douyin-account-name <name> --douyin-account-id <id>",
     "  node scripts/publish-browser.mjs status [--session <id>]",
     "  node scripts/publish-browser.mjs confirm --platform <name|all> --confirm-sha <sha> [--session <id>]",
-    "  node scripts/publish-browser.mjs verify --platform <douyin|xiaohongshu> [--session <id>]",
+    "  node scripts/publish-browser.mjs verify --platform douyin [--session <id>]",
     "  node scripts/publish-browser.mjs record --platform <name> --confirm-sha <sha> [--session <id>]",
   ].join("\n");
 }
@@ -660,6 +660,7 @@ async function main() {
     const session = readPublicationSession(ROOT, args.session);
     const platforms = args.platform === "all" ? session.requestedPlatforms : [String(args.platform || "")];
     assert(platforms.every((platform) => PUBLISH_PLATFORMS.includes(platform)), "confirm requires --platform <name|all>");
+    assertBrowserAutomationPlatforms(platforms);
     const results = platforms.map((platform) => writePublicationConfirmation(
       ROOT,
       session.id,
@@ -670,7 +671,8 @@ async function main() {
     return;
   }
   if (command === "verify") {
-    assert(PUBLISH_PLATFORMS.includes(args.platform), "verify requires --platform <douyin|xiaohongshu>");
+    assert(PUBLISH_PLATFORMS.includes(args.platform), "verify requires --platform douyin");
+    assertBrowserAutomationPlatforms([args.platform]);
     const session = readPublicationSession(ROOT, args.session);
     const result = await verifyPublishedPlatform(session.id, args.platform);
     printJson({ sessionId: session.id, platform: args.platform, ...result });

@@ -79,7 +79,7 @@ node scripts/init.mjs --configure-weread
 
 生成过程使用带生命周期标记的独立临时目录：独立预览保留 24 小时，失败任务保留 72 小时，最终成片成功后立即清理。可以运行 `npm run cleanup:temp -- --dry-run` 查看待清理内容；项目不会自动删除 `tmp/` 中来源不明、没有生命周期标记的文件。
 
-发布可使用项目内的专用 Chrome 工作流。`npm run publish:brief -- --position <序号>` 只从带 `READY` 标记的不可变 release 生成发布清单；`npm run publish:start -- --position <序号> ...` 使用 `.agents/browser-publisher/chrome-profile` 保存独立登录态并预填官方发布页。脚本会停在最终发布按钮前，并在确认时重新校验 release、文案、队列状态和成片 SHA-256；只有完全一致的 `publish:confirm` 才会触发发布。平台官方成功页或作品列表验证通过后，脚本才把带 release ID 和成片哈希的证明原子写入该平台状态；另一平台状态不会被连带修改。账号、浏览器配置、日志、截图和成功证明都保存在已忽略的 `.agents/` 中。
+发布前，`npm run publish:brief -- --position <序号>` 只从带 `READY` 标记的不可变 release 生成发布清单。抖音继续使用专用 Chrome 工作流：`npm run publish:start -- --position <序号> ...` 预填官方发布页并停在最终发布按钮前，只有 release、文案、队列状态和成片 SHA-256 完全一致的 `publish:confirm` 才会触发发布。小红书改为手动发布：`npm run publish:xiaohongshu -- --position <序号>` 用普通浏览器打开官方发布页，并在桌面上方显示不会被网页折叠的置顶面板；视频可以直接拖入上传区，标题和简介既可复制也可在用户点击后输入到刚刚聚焦的光标位置，标签会逐个输入并用键盘确认第一条平台建议，所有设置和最终话题都由用户核对并手工发布。小红书路径不会启动 Playwright、读取网页或点击发布。
 
 你也可以直接用自然语言操作，例如：
 
