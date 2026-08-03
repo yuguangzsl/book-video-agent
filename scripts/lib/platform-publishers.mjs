@@ -648,7 +648,7 @@ export async function waitForPlatformLogin(page, platform, options = {}) {
   throw new Error(`${platform} login timed out`);
 }
 
-export async function prepareXiaohongshu(page, brief, account) {
+async function prepareXiaohongshu(page, brief, account) {
   const copy = platformCopyFor(brief, "xiaohongshu");
   assertOfficialUrl("xiaohongshu", page.url());
   const accountSignal = await requireAccount(page, account, "xiaohongshu");
@@ -809,7 +809,7 @@ function extractWorkId(url) {
   return pathId || "";
 }
 
-export async function publishXiaohongshu(page, brief) {
+async function publishXiaohongshu(page, brief) {
   assertOfficialUrl("xiaohongshu", page.url());
   await waitForXiaohongshuCoverUpload(page);
   const button = await currentXiaohongshuPublishControl(page, 10000);
@@ -906,7 +906,7 @@ export async function verifyDouyinPublishedWork(page, brief, account = null, opt
   };
 }
 
-export async function verifyXiaohongshuPublishedWork(page, brief, account = null, options = {}) {
+async function verifyXiaohongshuPublishedWork(page, brief, account = null, options = {}) {
   const copy = platformCopyFor(brief, "xiaohongshu");
   if (!page.url().includes("/new/note-manager")) {
     await page.goto(PLATFORM_CONFIG.xiaohongshu.manageUrl, {
@@ -985,12 +985,16 @@ export async function verifyXiaohongshuPublishedWork(page, brief, account = null
 
 export function platformPrepareFunction(platform) {
   if (platform === "douyin") return prepareDouyin;
-  if (platform === "xiaohongshu") return prepareXiaohongshu;
+  if (platform === "xiaohongshu") {
+    throw new Error("Xiaohongshu browser preparation is disabled; use the manual publication panel");
+  }
   throw new Error(`Unsupported publication platform: ${platform}`);
 }
 
 export function platformPublishFunction(platform) {
   if (platform === "douyin") return publishDouyin;
-  if (platform === "xiaohongshu") return publishXiaohongshu;
+  if (platform === "xiaohongshu") {
+    throw new Error("Xiaohongshu browser publication is disabled; publish manually");
+  }
   throw new Error(`Unsupported publication platform: ${platform}`);
 }

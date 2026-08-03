@@ -4,6 +4,8 @@ import {
   descriptionHasExactTopic,
   douyinListTimestamp,
   platformCopyFor,
+  platformPrepareFunction,
+  platformPublishFunction,
   topicCandidateMatches,
   xiaohongshuListTimestamp,
   xiaohongshuPublishClickPosition,
@@ -51,6 +53,10 @@ const platformBrief = {
 };
 assert.equal(platformCopyFor(platformBrief, "douyin").title, "douyin title");
 assert.equal(platformCopyFor(platformBrief, "xiaohongshu").title, "xiaohongshu title");
+assert.equal(typeof platformPrepareFunction("douyin"), "function");
+assert.equal(typeof platformPublishFunction("douyin"), "function");
+assert.throws(() => platformPrepareFunction("xiaohongshu"), /manual publication panel/u);
+assert.throws(() => platformPublishFunction("xiaohongshu"), /publish manually/u);
 
 assert.deepEqual(xiaohongshuPublishClickPosition(680, 90), { x: 414.8, y: 45 });
 assert.throws(() => xiaohongshuPublishClickPosition(0, 90), /width must be positive/u);
