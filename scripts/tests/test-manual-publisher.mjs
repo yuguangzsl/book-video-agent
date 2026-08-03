@@ -89,24 +89,26 @@ try {
   assert.equal(testPayload.testMode, true);
 
   fs.writeFileSync(payloadPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
-  const validation = spawnSync("powershell.exe", [
-    "-NoProfile",
-    "-ExecutionPolicy",
-    "Bypass",
-    "-STA",
-    "-File",
-    panelScript,
-    "-PayloadPath",
-    payloadPath,
-    "-SmokeTest",
-  ], { encoding: "utf8" });
-  assert.equal(validation.status, 0, validation.stderr || validation.stdout);
-  assert.deepEqual(JSON.parse(validation.stdout.trim()), {
-    smokeTest: true,
-    topmost: true,
-    title: "小红书手动发布 - 测试图书",
-    sectionCount: 5,
-  });
+  if (process.platform === "win32") {
+    const validation = spawnSync("powershell.exe", [
+      "-NoProfile",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-STA",
+      "-File",
+      panelScript,
+      "-PayloadPath",
+      payloadPath,
+      "-SmokeTest",
+    ], { encoding: "utf8" });
+    assert.equal(validation.status, 0, validation.stderr || validation.stdout);
+    assert.deepEqual(JSON.parse(validation.stdout.trim()), {
+      smokeTest: true,
+      topmost: true,
+      title: "小红书手动发布 - 测试图书",
+      sectionCount: 5,
+    });
+  }
 
   const panelSource = fs.readFileSync(panelScript, "utf8");
   assert.match(panelSource, /\$window\.Topmost = \$true/u);
