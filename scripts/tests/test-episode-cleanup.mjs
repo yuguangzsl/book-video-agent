@@ -24,6 +24,7 @@ try {
   const oldEpisode = createEpisode("旧书", 8);
   const newEpisode = createEpisode("新书", 6);
   const activeEpisode = createEpisode("活动书", 9);
+  const xiaohongshuPendingEpisode = createEpisode("仅小红书待核验", 9);
   const unknownEpisode = path.join(root, "episodes", "年龄未知");
   fs.mkdirSync(unknownEpisode, { recursive: true });
   const outside = path.join(root, "keep.txt");
@@ -42,6 +43,17 @@ try {
       douyinStatus: "pending",
       xiaohongshuStatus: "published",
       createdAt: new Date(now - 9 * day).toISOString(),
+    }, {
+      position: 2,
+      book: "仅小红书待核验",
+      videoPath: path.join(xiaohongshuPendingEpisode, "renders", "final.mp4"),
+      title: "标题",
+      description: "简介",
+      scriptVersion: "v1",
+      renderSha256: "b".repeat(64),
+      douyinStatus: "published",
+      xiaohongshuStatus: "pending",
+      createdAt: new Date(now - 9 * day).toISOString(),
     }],
   }, null, 2)}\n`, "utf8");
 
@@ -49,18 +61,20 @@ try {
   assert.equal(dryRun.items.find((item) => item.episode === "旧书").eligible, true);
   assert.equal(dryRun.items.find((item) => item.episode === "新书").eligible, false);
   assert.equal(dryRun.items.find((item) => item.episode === "活动书").reason, "active");
+  assert.equal(dryRun.items.find((item) => item.episode === "仅小红书待核验").eligible, true);
   assert.equal(dryRun.items.find((item) => item.episode === "年龄未知").reason, "untrusted-age");
   assert.equal(fs.existsSync(oldEpisode), true);
   assert.deepEqual(readGeneratedTitleIndex(root), []);
 
   const applied = cleanupEpisodes(root, { now, apply: true });
-  assert.deepEqual(applied.removed.map((item) => item.title), ["旧书"]);
+  assert.deepEqual(applied.removed.map((item) => item.title).sort(), ["仅小红书待核验", "旧书"].sort());
   assert.equal(fs.existsSync(oldEpisode), false);
   assert.equal(fs.existsSync(newEpisode), true);
   assert.equal(fs.existsSync(activeEpisode), true);
+  assert.equal(fs.existsSync(xiaohongshuPendingEpisode), false);
   assert.equal(fs.existsSync(unknownEpisode), true);
   assert.equal(fs.readFileSync(outside, "utf8"), "keep");
-  assert.deepEqual(readGeneratedTitleIndex(root), ["旧书"]);
+  assert.deepEqual(readGeneratedTitleIndex(root).sort(), ["仅小红书待核验", "旧书"].sort());
 } finally {
   fs.rmSync(root, { recursive: true, force: true });
 }

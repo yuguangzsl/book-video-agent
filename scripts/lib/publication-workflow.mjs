@@ -4,6 +4,13 @@ import path from "node:path";
 import { writeFileAtomically } from "./filesystem.mjs";
 import { readJsonFile } from "./json.mjs";
 import { readPublishQueue } from "./publish-queue.mjs";
+import {
+  readProductionLedger,
+  recordPlatformPublicationAttempt,
+  summarizeProductionRelease,
+  updateProductionLedger,
+  verifyPublishQueueProjection,
+} from "./production-ledger.mjs";
 import { readReleasePackage } from "./release-package.mjs";
 
 export const PUBLISH_PLATFORMS = ["douyin", "xiaohongshu"];
@@ -42,8 +49,18 @@ const STATUS_TRANSITIONS = {
   published_unrecorded: ["published"],
   published: ["submission_unknown"],
   failed: ["published_unrecorded"],
-  cancelled: [],
+  cancelled: ["submission_unknown"],
 };
+const UNRESOLVED_ATTEMPT_STATUSES = new Set([
+  "opening",
+  "login_required",
+  "preparing",
+  "ready",
+  "publishing",
+  "submission_unknown",
+  "published_unrecorded",
+  "published",
+]);
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -80,6 +97,28 @@ function nextPublicationAttempt(root, brief, platform) {
   return priorAttempts.length + 1;
 }
 
+function syncPublicationAttemptToLedger(root, session, platform) {
+  const state = session.platforms[platform];
+  return updateProductionLedger(root, (ledger) => {
+    recordPlatformPublicationAttempt(ledger, {
+      releaseId: session.brief.releaseId,
+      platform,
+      source: "live-publication-session",
+      sessionId: session.id,
+      attemptNumber: session.attempts?.[platform],
+      status: state.status,
+      startedAt: session.createdAt,
+      updatedAt: state.updatedAt,
+      queuePosition: session.brief.queuePosition,
+      account: session.accounts?.[platform],
+      confirmation: state.confirmation,
+      sessionEvidence: state.proof,
+      sourcePath: path.relative(root, sessionPath(root, session.id)).split(path.sep).join("/"),
+    });
+    return ledger;
+  }, { now: state.updatedAt });
+}
+
 export function commandPath(root, sessionId, platform) {
   assert(PUBLISH_PLATFORMS.includes(platform), `Unsupported publication platform: ${platform}`);
   return path.join(publisherRoot(root), "commands", `${sessionId}.${platform}.confirm.json`);
@@ -95,6 +134,8 @@ export function buildPublicationBrief(root, options = {}) {
   ));
   assert(matches.length === 1, `Expected exactly one publication queue item, found ${matches.length}`);
   const queueItem = matches[0];
+  const ledger = readProductionLedger(root, { required: true });
+  verifyPublishQueueProjection(ledger, [queueItem]);
   assert(
     queueItem.releaseId && queueItem.releaseManifestPath,
     `Queue item ${queueItem.book} has no immutable release; run stock:finalize again`,
@@ -188,12 +229,21 @@ export function createPublicationSession(root, options = {}) {
   assert(platforms.every((platform) => PUBLISH_PLATFORMS.includes(platform)), "Unsupported publication platform requested");
   const brief = buildPublicationBrief(root, options);
   const repostTest = options.repostTest === true;
+  const ledger = readProductionLedger(root, { required: true });
+  const releaseHistory = summarizeProductionRelease(ledger, brief.releaseId);
   for (const platform of platforms) {
     const expectedStatus = repostTest ? "published" : "pending";
     assert(
       brief.queueStatus[platform] === expectedStatus,
       `${platform} must be ${expectedStatus} for queue item ${brief.queuePosition}`,
     );
+    if (!repostTest) {
+      const latestAttempt = releaseHistory.platforms[platform].latestAttempt;
+      assert(
+        !latestAttempt || !UNRESOLVED_ATTEMPT_STATUSES.has(latestAttempt.status),
+        `${platform} release ${brief.releaseId} has unresolved session ${latestAttempt?.sessionId || latestAttempt?.id}: ${latestAttempt?.status}`,
+      );
+    }
   }
   const attempts = Object.fromEntries(platforms.map((platform) => {
     const attempt = nextPublicationAttempt(root, brief, platform);
@@ -226,6 +276,7 @@ export function createPublicationSession(root, options = {}) {
   fs.mkdirSync(sessionsRoot(root), { recursive: true });
   writeFileAtomically(sessionPath(root, session.id), `${JSON.stringify(session, null, 2)}\n`, { encoding: "utf8" });
   writeFileAtomically(currentSessionPath(root), `${JSON.stringify({ sessionId: session.id }, null, 2)}\n`, { encoding: "utf8" });
+  for (const platform of platforms) syncPublicationAttemptToLedger(root, session, platform);
   return session;
 }
 
@@ -254,7 +305,7 @@ export function updatePublicationSession(root, sessionId, updater, options = {})
 
 export function updatePublicationPlatform(root, sessionId, platform, patch, options = {}) {
   assert(PUBLISH_PLATFORMS.includes(platform), `Unsupported publication platform: ${platform}`);
-  return updatePublicationSession(root, sessionId, (session) => {
+  const updated = updatePublicationSession(root, sessionId, (session) => {
     const now = options.now instanceof Date ? options.now : new Date(options.now || Date.now());
     const currentStatus = session.platforms[platform].status;
     const nextStatus = patch.status || currentStatus;
@@ -266,6 +317,12 @@ export function updatePublicationPlatform(root, sessionId, platform, patch, opti
     if (currentStatus === "published" && nextStatus === "submission_unknown") {
       assert(session.repostTest === true, "Only test repost sessions can revalidate published proof");
     }
+    if (currentStatus === "cancelled" && nextStatus === "submission_unknown") {
+      assert(
+        session.platforms[platform].manualSubmission?.renderSha256 === session.brief.renderSha256,
+        `Manual ${platform} submission acknowledgement does not match the prepared render`,
+      );
+    }
     session.platforms[platform] = {
       ...session.platforms[platform],
       ...patch,
@@ -273,14 +330,28 @@ export function updatePublicationPlatform(root, sessionId, platform, patch, opti
     };
     return session;
   }, options);
+  syncPublicationAttemptToLedger(root, updated, platform);
+  return updated;
 }
 
 export function writePublicationConfirmation(root, sessionId, platform, expectedRenderSha256, options = {}) {
   const session = readPublicationSession(root, sessionId);
   assert(session.requestedPlatforms.includes(platform), `${platform} was not requested in session ${session.id}`);
-  assert(session.platforms[platform].status === "ready", `${platform} is not ready for final publication`);
+  const manualSubmission = options.manualSubmission === true;
+  assert(
+    session.platforms[platform].status === (manualSubmission ? "cancelled" : "ready"),
+    `${platform} is not ready for final publication`,
+  );
   const normalizedSha = String(expectedRenderSha256 || "").trim().toLowerCase();
   assert(normalizedSha === session.brief.renderSha256, "Final confirmation SHA does not match the prepared render");
+  if (manualSubmission) {
+    assert(platform === "douyin", "Manual submission acknowledgement is supported only for douyin");
+    assert(session.repostTest !== true, "Test repost sessions cannot acknowledge a manual submission");
+    assert(
+      session.platforms[platform].manualSubmission?.renderSha256 === normalizedSha,
+      "Manual submission acknowledgement does not match the prepared render",
+    );
+  }
   const command = {
     schemaVersion: 1,
     sessionId: session.id,

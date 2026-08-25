@@ -906,7 +906,7 @@ export async function verifyDouyinPublishedWork(page, brief, account = null, opt
   };
 }
 
-async function verifyXiaohongshuPublishedWork(page, brief, account = null, options = {}) {
+export async function verifyXiaohongshuPublishedWork(page, brief, account = null, options = {}) {
   const copy = platformCopyFor(brief, "xiaohongshu");
   if (!page.url().includes("/new/note-manager")) {
     await page.goto(PLATFORM_CONFIG.xiaohongshu.manageUrl, {
@@ -940,7 +940,7 @@ async function verifyXiaohongshuPublishedWork(page, brief, account = null, optio
 
   const notBefore = options.notBefore ? Date.parse(options.notBefore) : Number.NaN;
   assert(!options.notBefore || Number.isFinite(notBefore), "Xiaohongshu verification notBefore must be an ISO date");
-  const recentThreshold = Number.isFinite(notBefore) ? notBefore - 5 * 60 * 1000 : null;
+  const recentThreshold = Number.isFinite(notBefore) ? notBefore : null;
   const listDeadline = Date.now() + 60000;
   let exactTitle = null;
   let itemText = "";

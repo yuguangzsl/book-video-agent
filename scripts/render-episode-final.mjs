@@ -5,7 +5,13 @@ import path from "node:path";
 import { runCommandSync } from "./lib/command.mjs";
 import { buildCaptionInspectTimes } from "./lib/caption-layout.mjs";
 import { validateEpisodeForRender } from "./lib/episode-checks.mjs";
-import { describeManifestFile, probeMediaFile, readAndValidateRenderManifest } from "./lib/render-manifest.mjs";
+import {
+  assertFirstFrameCover,
+  describeManifestFile,
+  probeMediaFile,
+  probeVideoFrameLuma,
+  readAndValidateRenderManifest,
+} from "./lib/render-manifest.mjs";
 import { slugifyEpisodeName } from "./lib/episode-slug.mjs";
 import { replaceFilesWithRollback } from "./lib/file-transaction.mjs";
 import { readJsonFile } from "./lib/json.mjs";
@@ -20,7 +26,10 @@ import {
   VIDEO_WIDTH,
 } from "./lib/project-constants.mjs";
 import { resolveScriptVersion } from "./lib/script-version.mjs";
-import { resolveFirstFrameTitleConfig } from "./lib/first-frame-title.mjs";
+import {
+  buildFirstFrameCoverSourceCandidates,
+  resolveFirstFrameTitleConfig,
+} from "./lib/first-frame-title.mjs";
 import {
   TEMP_RETENTION_HOURS,
   createTempWorkspace,
@@ -126,10 +135,16 @@ function validateHyperframesWorkspace(workspacePath, inspectTimes) {
     "--yes", packageName, "validate", "--json", "--no-contrast",
     "--timeout", String(HYPERFRAMES_CHECK_TIMEOUT_MS), workspacePath,
   ], { env });
-  run("npx", [
+  const inspectArgs = [
     "--yes", packageName, "inspect", "--json",
     "--strict", "--timeout", String(HYPERFRAMES_CHECK_TIMEOUT_MS), "--at", inspectTimes.join(","), workspacePath,
-  ], { env });
+  ];
+  try {
+    run("npx", inspectArgs, { env });
+  } catch (error) {
+    console.warn(`HyperFrames inspect failed once; retrying the same workspace and sample set: ${error.message}`);
+    run("npx", inspectArgs, { env });
+  }
 }
 
 function activateFinalRender(candidatePath, destinationPath, candidateManifest, destinationManifest) {
@@ -193,7 +208,7 @@ function writeRenderManifest(filePath, mediaMetadata) {
             firstFrameTitle: {
               holdSeconds: firstFrameTitleHoldSeconds,
               source: "body",
-              sourceSeconds: firstFrameTitleSourceSeconds,
+              sourceSeconds: selectedFirstFrameTitleSourceSeconds,
             },
           }
         : {}),
@@ -252,6 +267,7 @@ const brief = readJsonFile(briefPath);
 const firstFrameTitle = resolveFirstFrameTitleConfig(brief);
 const firstFrameTitleHoldSeconds = Number(firstFrameTitle.holdSeconds);
 const firstFrameTitleSourceSeconds = Number(firstFrameTitle.sourceSeconds);
+let selectedFirstFrameTitleSourceSeconds = firstFrameTitleSourceSeconds;
 if (
   !Number.isFinite(firstFrameTitleHoldSeconds)
   || firstFrameTitleHoldSeconds < 0
@@ -269,14 +285,14 @@ const firstFrameDurationSeconds = Number((1 / FIRST_FRAME_RATE).toFixed(6));
 if (firstFrameTitleEnabled && firstFrameTitleHoldSeconds < firstFrameDurationSeconds) {
   throw new Error(`brief.firstFrameTitleHoldSeconds must be at least ${firstFrameDurationSeconds} when enabled`);
 }
-const firstFrameSourceEndSeconds = Number(
+const configuredFirstFrameSourceEndSeconds = Number(
   (firstFrameTitleSourceSeconds + firstFrameDurationSeconds).toFixed(6),
 );
 const firstFrameStopPaddingSeconds = Number(
   Math.max(0, firstFrameTitleHoldSeconds - firstFrameDurationSeconds).toFixed(6),
 );
 const bodyDuration = Number(preflight.timings.duration);
-if (firstFrameTitleEnabled && firstFrameSourceEndSeconds > bodyDuration) {
+if (firstFrameTitleEnabled && configuredFirstFrameSourceEndSeconds > bodyDuration) {
   throw new Error("brief.firstFrameTitleSourceSeconds must identify a frame inside the body video");
 }
 const contentDuration = Number((INTRO_TRIM_SECONDS + bodyDuration).toFixed(2));
@@ -368,8 +384,40 @@ try {
   ]);
 
   if (firstFrameTitleEnabled) {
+    const coverCandidates = buildFirstFrameCoverSourceCandidates(
+      firstFrameTitleSourceSeconds,
+      bodyDuration,
+      firstFrameDurationSeconds,
+    );
+    let selectedCover = null;
+    const rejectedCovers = [];
+    for (const sourceSeconds of coverCandidates) {
+      const contentSourceSeconds = Number((INTRO_TRIM_SECONDS + sourceSeconds).toFixed(6));
+      const metrics = probeVideoFrameLuma(
+        candidateContentOutputPath,
+        { width: VIDEO_WIDTH, height: VIDEO_HEIGHT },
+        contentSourceSeconds,
+      );
+      try {
+        assertFirstFrameCover(metrics);
+        selectedCover = { sourceSeconds, metrics };
+        break;
+      } catch (error) {
+        rejectedCovers.push(`${sourceSeconds.toFixed(3)}s: ${error.message}`);
+      }
+    }
+    if (!selectedCover) {
+      throw new Error(
+        `Unable to find a non-black first-frame cover in the body video. Checked ${coverCandidates.length} frames. ${rejectedCovers.join(" | ")}`,
+      );
+    }
+    selectedFirstFrameTitleSourceSeconds = selectedCover.sourceSeconds;
+    console.log(
+      `Selected first-frame cover at body ${selectedFirstFrameTitleSourceSeconds.toFixed(3)}s `
+      + `(mean luma ${selectedCover.metrics.meanLuma.toFixed(2)}, black pixels ${(selectedCover.metrics.blackPixelRatio * 100).toFixed(1)}%)`,
+    );
     const firstFrameContentSourceSeconds = Number(
-      (INTRO_TRIM_SECONDS + firstFrameTitleSourceSeconds).toFixed(6),
+      (INTRO_TRIM_SECONDS + selectedFirstFrameTitleSourceSeconds).toFixed(6),
     );
     const firstFrameContentSourceEndSeconds = Number(
       (firstFrameContentSourceSeconds + firstFrameDurationSeconds).toFixed(6),
@@ -418,6 +466,7 @@ try {
   }
 
   const mediaMetadata = probeMediaFile(candidateOutputPath);
+  assertFirstFrameCover(mediaMetadata.firstFrame);
   if (mediaMetadata.video.width !== VIDEO_WIDTH || mediaMetadata.video.height !== VIDEO_HEIGHT) {
     throw new Error(`Invalid final video dimensions: ${mediaMetadata.video.width}x${mediaMetadata.video.height}`);
   }

@@ -103,6 +103,7 @@ function main() {
     book: payload.book,
     payloadPath,
     videoPath: payload.videoPath,
+    publicationVerification: "disabled",
   });
 }
 

@@ -12,13 +12,23 @@
     "stock:status": "node scripts/manage-stock-replenishment.mjs status",
     "stock:finalize": "node scripts/finalize-episode.mjs",
     "stock:verify": "node scripts/manage-stock-replenishment.mjs verify",
+    "stock:rollback": "node scripts/rollback-mistaken-stock-replenishment.mjs",
     "inventory:list": "node scripts/inspect-publish-queue.mjs",
     "inventory:verify": "node scripts/inspect-publish-queue.mjs --verify",
+    "inventory:archive-inactive": "node scripts/archive-inactive-publish-queue.mjs",
+    "inventory:xiaohongshu:skip-pending": "node scripts/skip-xiaohongshu-pending.mjs",
+    "inventory:xiaohongshu:reopen-false-positive": "node scripts/reopen-xiaohongshu-false-positive.mjs",
+    "production:migrate": "node scripts/migrate-production-ledger.mjs",
+    "production:list": "node scripts/inspect-production-state.mjs",
+    "production:verify": "node scripts/inspect-production-state.mjs --verify",
+    "publish:next": "node scripts/inspect-production-state.mjs --next",
     "publish:brief": "node scripts/publish-browser.mjs brief",
     "publish:xiaohongshu": "node scripts/publish-xiaohongshu-manual.mjs",
+    "publish:xiaohongshu:status": "node scripts/verify-xiaohongshu-manual.mjs --status",
     "publish:start": "node scripts/publish-browser.mjs start",
     "publish:status": "node scripts/publish-browser.mjs status",
     "publish:confirm": "node scripts/publish-browser.mjs confirm",
+    "publish:ack-manual": "node scripts/publish-browser.mjs acknowledge-manual",
     "publish:verify": "node scripts/publish-browser.mjs verify",
     "publish:record": "node scripts/publish-browser.mjs record",
     "book:check": "node scripts/check-book-eligibility.mjs",
@@ -26,6 +36,14 @@
     "preview:delivery": "node scripts/format-preview-delivery.mjs",
     "prepare:voiceover": "node scripts/prepare-body-voiceover.mjs",
     "cleanup:temp": "node scripts/cleanup-temp.mjs"
+  },
+  "dependencies": {
+    "@seepine/edge-tts": "1.4.1"
+  },
+  "overrides": {
+    "@seepine/edge-tts": {
+      "ws": "8.21.0"
+    }
   },
   "devDependencies": {
     "playwright-core": "1.58.2"

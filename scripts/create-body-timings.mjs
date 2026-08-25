@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import {
   assertTtsUnitsMatchScript,
@@ -121,7 +122,31 @@ if (options.edgeSubtitles) {
   };
 } else {
   fs.mkdirSync(asrDir, { recursive: true });
-  run("whisper-cli", ["-ng", "-m", MODEL_PATH, "-l", "zh", "-oj", "-otxt", "-of", asrBase, voicePath], { stdio: "inherit" });
+  const tempRoot = path.resolve(os.tmpdir());
+  const whisperWorkspace = fs.mkdtempSync(path.join(tempRoot, "book-video-whisper-"));
+  if (path.dirname(whisperWorkspace) !== tempRoot) {
+    throw new Error(`Whisper workspace escaped the system temporary directory: ${whisperWorkspace}`);
+  }
+  try {
+    const whisperInputPath = path.join(whisperWorkspace, "input.wav");
+    const whisperOutputBase = path.join(whisperWorkspace, "body");
+    const whisperJsonPath = `${whisperOutputBase}.json`;
+    run("ffmpeg", [
+      "-y", "-v", "error", "-i", voicePath,
+      "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le",
+      whisperInputPath,
+    ]);
+    run("whisper-cli", [
+      "-ng", "-m", MODEL_PATH, "-l", "zh", "-oj", "-otxt",
+      "-of", whisperOutputBase, whisperInputPath,
+    ], { stdio: "inherit" });
+    if (!fs.existsSync(whisperJsonPath) || !fs.statSync(whisperJsonPath).isFile()) {
+      throw new Error(`whisper-cli did not create a fresh ASR JSON file: ${whisperJsonPath}`);
+    }
+    writeFileAtomically(`${asrBase}.json`, fs.readFileSync(whisperJsonPath));
+  } finally {
+    fs.rmSync(whisperWorkspace, { recursive: true, force: true });
+  }
   const silenceResult = run(
     "ffmpeg",
     ["-hide_banner", "-i", voicePath, "-af", `silencedetect=noise=${options.noise}:d=${options.silenceDuration}`, "-f", "null", "-"],

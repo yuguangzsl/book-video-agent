@@ -2,7 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { readGeneratedTitleIndex, recordGeneratedTitle } from "./generated-title-index.mjs";
 import { readJsonFile } from "./json.mjs";
-import { readPublishQueue } from "./publish-queue.mjs";
+import {
+  MISTAKEN_STOCK_REPLENISHMENT_ARCHIVE_KIND,
+  readPublishQueue,
+  readPublishQueueArchive,
+} from "./publish-queue.mjs";
+import { publicationStatusBlocksCompletion } from "./publication-policy.mjs";
 import { readAndValidateRenderManifest } from "./render-manifest.mjs";
 import { readReplenishmentBatch } from "./replenishment-batch.mjs";
 import { removeDirectory } from "./filesystem.mjs";
@@ -30,13 +35,29 @@ function activeEpisodeNames(root) {
   const active = new Set();
   const queue = readPublishQueue(root);
   for (const item of queue?.items || []) {
-    if (item.douyinStatus === "pending" || item.xiaohongshuStatus === "pending") active.add(item.book);
+    if (
+      publicationStatusBlocksCompletion("douyin", item.douyinStatus)
+      || publicationStatusBlocksCompletion("xiaohongshu", item.xiaohongshuStatus)
+    ) {
+      active.add(item.book);
+    }
   }
   const batch = readReplenishmentBatch(root);
   if (batch?.status === "active") {
     for (const item of batch.items) active.add(item.book);
   }
   return active;
+}
+
+function protectedRollbackArchiveEpisodeNames(root) {
+  const protectedEpisodes = new Set();
+  const archive = readPublishQueueArchive(root);
+  for (const entry of archive.items) {
+    if (entry.correction?.kind === MISTAKEN_STOCK_REPLENISHMENT_ARCHIVE_KIND) {
+      protectedEpisodes.add(entry.item.book);
+    }
+  }
+  return protectedEpisodes;
 }
 
 function resolveGeneratedTime(root, episodeDir, options, warnings) {
@@ -71,6 +92,7 @@ export function inventoryEpisodeCleanup(root, options = {}) {
   const episodesRoot = path.resolve(root, "episodes");
   const now = options.now instanceof Date ? options.now.getTime() : Number(options.now ?? Date.now());
   const active = activeEpisodeNames(root);
+  const protectedRollbackArchives = protectedRollbackArchiveEpisodeNames(root);
   const items = [];
   if (!fs.existsSync(episodesRoot)) return { now: new Date(now).toISOString(), items };
 
@@ -81,8 +103,9 @@ export function inventoryEpisodeCleanup(root, options = {}) {
     const displayTitle = readDisplayTitle(episodeDir, entry.name);
     const generated = resolveGeneratedTime(root, episodeDir, options, warnings);
     const isActive = active.has(entry.name);
+    const isProtectedRollbackArchive = protectedRollbackArchives.has(entry.name);
     const ageMs = generated ? now - generated.timestamp : null;
-    const eligible = !isActive && Number.isFinite(ageMs) && ageMs > 7 * DAY_MS;
+    const eligible = !isActive && !isProtectedRollbackArchive && Number.isFinite(ageMs) && ageMs > 7 * DAY_MS;
     items.push({
       episode: entry.name,
       displayTitle,
@@ -94,6 +117,8 @@ export function inventoryEpisodeCleanup(root, options = {}) {
       eligible,
       reason: isActive
         ? "active"
+        : isProtectedRollbackArchive
+          ? "protected-mistaken-stock-replenishment-archive"
         : !generated
           ? "untrusted-age"
           : eligible

@@ -2,6 +2,10 @@
 
 import { validateCompletedEpisode } from "./lib/episode-checks.mjs";
 import { readPublishQueue } from "./lib/publish-queue.mjs";
+import {
+  readProductionLedger,
+  verifyPublishQueueProjection,
+} from "./lib/production-ledger.mjs";
 
 const ROOT = process.cwd();
 const args = process.argv.slice(2);
@@ -16,6 +20,8 @@ const queue = readPublishQueue(ROOT, { required: true });
 if (!verify) {
   process.stdout.write(`${JSON.stringify(queue, null, 2)}\n`);
 } else {
+  const ledger = readProductionLedger(ROOT, { required: true });
+  const releaseHistory = verifyPublishQueueProjection(ledger, queue.items);
   const items = queue.items.map((item) => {
     const result = validateCompletedEpisode(ROOT, item.book, item.scriptVersion, {
       requirePublish: true,
@@ -30,6 +36,8 @@ if (!verify) {
   process.stdout.write(`${JSON.stringify({
     verifiedAt: new Date().toISOString(),
     count: items.length,
+    productionLedgerUpdatedAt: ledger.updatedAt,
+    releaseHistory,
     items,
   }, null, 2)}\n`);
 }

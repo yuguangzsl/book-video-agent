@@ -324,8 +324,14 @@ async function publishPlatform(page, sessionId, platform) {
     const queueUpdate = markPublishQueuePlatformPublished(ROOT, {
       book: session.brief.book,
       platform,
+      expectedReleaseId: session.brief.releaseId,
       expectedRenderSha256: session.brief.renderSha256,
-      proof,
+      proof: {
+        ...proof,
+        sessionId: session.id,
+        account: session.accounts?.[platform],
+        confirmedAt: session.platforms[platform].confirmation?.confirmedAt,
+      },
     });
     updatePublicationPlatform(ROOT, sessionId, platform, {
       status: "published",
@@ -485,8 +491,14 @@ function recordPublishedPlatform(sessionId, platform, expectedRenderSha256) {
   const result = markPublishQueuePlatformPublished(ROOT, {
     book: session.brief.book,
     platform,
+    expectedReleaseId: session.brief.releaseId,
     expectedRenderSha256: session.brief.renderSha256,
-    proof: state.proof,
+    proof: {
+      ...state.proof,
+      sessionId: session.id,
+      account: session.accounts?.[platform],
+      confirmedAt: state.confirmation?.confirmedAt,
+    },
   });
   updatePublicationPlatform(ROOT, session.id, platform, {
     status: "published",
@@ -583,8 +595,14 @@ async function verifyPublishedPlatform(sessionId, platform) {
       const queueUpdate = markPublishQueuePlatformPublished(ROOT, {
         book: session.brief.book,
         platform,
+        expectedReleaseId: session.brief.releaseId,
         expectedRenderSha256: session.brief.renderSha256,
-        proof,
+        proof: {
+          ...proof,
+          sessionId: session.id,
+          account: session.accounts?.[platform],
+          confirmedAt: confirmation.confirmedAt,
+        },
       });
       updatePublicationPlatform(ROOT, session.id, platform, {
         status: "published",
@@ -621,6 +639,7 @@ function usage() {
     "  node scripts/publish-browser.mjs start --position <n> [--platforms douyin] [--repost-test] --douyin-account-name <name> --douyin-account-id <id>",
     "  node scripts/publish-browser.mjs status [--session <id>]",
     "  node scripts/publish-browser.mjs confirm --platform <name|all> --confirm-sha <sha> [--session <id>]",
+    "  node scripts/publish-browser.mjs acknowledge-manual --platform douyin --confirm-sha <sha> [--session <id>]",
     "  node scripts/publish-browser.mjs verify --platform douyin [--session <id>]",
     "  node scripts/publish-browser.mjs record --platform <name> --confirm-sha <sha> [--session <id>]",
   ].join("\n");
@@ -668,6 +687,59 @@ async function main() {
       args["confirm-sha"],
     ));
     printJson({ sessionId: session.id, confirmed: results.map((result) => result.command.platform) });
+    return;
+  }
+  if (command === "acknowledge-manual") {
+    assert(args.platform === "douyin", "acknowledge-manual requires --platform douyin");
+    const session = readPublicationSession(ROOT, args.session);
+    assert(session.repostTest !== true, "Test repost sessions cannot acknowledge a manual submission");
+    assert(session.requestedPlatforms.includes(args.platform), `${args.platform} was not requested in session ${session.id}`);
+    assert(session.platforms[args.platform].status === "ready", `${args.platform} is not ready for manual submission acknowledgement`);
+    const normalizedSha = String(args["confirm-sha"] || "").trim().toLowerCase();
+    assert(normalizedSha === session.brief.renderSha256, "Manual submission SHA does not match the prepared render");
+    const reportedAt = new Date().toISOString();
+    updatePublicationPlatform(ROOT, session.id, args.platform, {
+      status: "cancelled",
+      manualSubmission: {
+        reportedAt,
+        releaseId: session.brief.releaseId,
+        renderSha256: normalizedSha,
+      },
+      error: "",
+      action: "Manual submission reported; stopping the preparer before read-only verification",
+    });
+    const stopDeadline = Date.now() + 30000;
+    let stopped = readPublicationSession(ROOT, session.id).worker?.stoppedAt || "";
+    while (!stopped && Date.now() < stopDeadline) {
+      await delay(250);
+      stopped = readPublicationSession(ROOT, session.id).worker?.stoppedAt || "";
+    }
+    assert(stopped, "Publisher worker did not stop before manual-submission verification");
+    const confirmation = writePublicationConfirmation(
+      ROOT,
+      session.id,
+      args.platform,
+      normalizedSha,
+      { now: reportedAt, manualSubmission: true },
+    );
+    updatePublicationPlatform(ROOT, session.id, args.platform, {
+      status: "submission_unknown",
+      proof: {
+        acceptedSignal: "user reported manual submission from the prepared official form",
+        submittedAt: reportedAt,
+        releaseId: session.brief.releaseId,
+        renderSha256: normalizedSha,
+      },
+      error: "",
+      action: "Manual submission reported; verify the official list without republishing",
+    });
+    printJson({
+      sessionId: session.id,
+      platform: args.platform,
+      acknowledged: true,
+      reportedAt: confirmation.command.confirmedAt,
+      renderSha256: confirmation.command.renderSha256,
+    });
     return;
   }
   if (command === "verify") {

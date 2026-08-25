@@ -11,6 +11,11 @@ import {
   validatePublicationSession,
   writePublicationConfirmation,
 } from "../lib/publication-workflow.mjs";
+import {
+  createProductionLedger,
+  recordProductionRelease,
+  writeProductionLedger,
+} from "../lib/production-ledger.mjs";
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "book-video-publication-workflow-test-"));
 const publisherRoot = path.join(root, ".agents", "browser-publisher");
@@ -42,6 +47,17 @@ const session = {
 };
 
 try {
+  const ledger = createProductionLedger({ now });
+  recordProductionRelease(ledger, {
+    releaseId,
+    renderSha256: hash,
+    displayTitle: "book",
+    episodeName: "book",
+    scriptVersion: "v1",
+    manifestPath: "episodes/book/releases/release.json",
+    createdAt: now,
+  }, { now });
+  writeProductionLedger(root, ledger, { now });
   fs.mkdirSync(sessionsRoot, { recursive: true });
   fs.writeFileSync(path.join(sessionsRoot, `${sessionId}.json`), `${JSON.stringify(session, null, 2)}\n`, "utf8");
   fs.writeFileSync(path.join(publisherRoot, "current-session.json"), `${JSON.stringify({ sessionId }, null, 2)}\n`, "utf8");
@@ -107,6 +123,48 @@ try {
   assert.equal(updated.platforms.douyin.status, "published_unrecorded");
   assert.equal(publicationSessionSummary(updated).queuePosition, 5);
   assert.deepEqual(publicationSessionSummary(governedSession).attempts, { douyin: 1 });
+
+  const manualSessionId = "session-manual";
+  const manualSession = {
+    ...session,
+    id: manualSessionId,
+    publicationPolicyVersion: 2,
+    attempts: { douyin: 1 },
+    repostTest: false,
+  };
+  fs.writeFileSync(
+    path.join(sessionsRoot, `${manualSessionId}.json`),
+    `${JSON.stringify(manualSession, null, 2)}\n`,
+    "utf8",
+  );
+  const manualCancelled = updatePublicationPlatform(root, manualSessionId, "douyin", {
+    status: "cancelled",
+    manualSubmission: {
+      reportedAt: "2026-07-30T03:03:00.000Z",
+      releaseId,
+      renderSha256: hash,
+    },
+  }, {
+    now: new Date("2026-07-30T03:03:00.000Z"),
+  });
+  assert.equal(manualCancelled.platforms.douyin.status, "cancelled");
+  assert.equal(manualCancelled.platforms.douyin.manualSubmission.renderSha256, hash);
+  writePublicationConfirmation(root, manualSessionId, "douyin", hash, {
+    now: new Date("2026-07-30T03:03:00.000Z"),
+    manualSubmission: true,
+  });
+  assert.equal(readPublicationConfirmation(root, manualSessionId, "douyin").renderSha256, hash);
+  const manuallySubmitted = updatePublicationPlatform(root, manualSessionId, "douyin", {
+    status: "submission_unknown",
+    proof: {
+      acceptedSignal: "user reported manual submission from the prepared official form",
+      releaseId,
+      renderSha256: hash,
+    },
+  }, {
+    now: new Date("2026-07-30T03:03:01.000Z"),
+  });
+  assert.equal(manuallySubmitted.platforms.douyin.status, "submission_unknown");
 } finally {
   fs.rmSync(root, { recursive: true, force: true });
 }

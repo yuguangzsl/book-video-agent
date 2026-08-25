@@ -73,13 +73,15 @@ node scripts/init.mjs --configure-weread
 6. 如果你要求替换文案、图片或音频，Codex 会生成新方案，通过检查后覆盖旧方案。
 7. 成片通过检查后，Codex 参考至少 5 个可核验的热门同类视频，生成并保存 3 个标题候选、1 段简介和 3-5 个标签；最终通过 `stock:finalize` 或 `check:episode --delivery` 返回可点击的视频路径、选定标题和选定简介。
 
-周补货时，Codex 会先用 `npm run stock:begin -- "<样本书>" "<后续书目>"` 建立批次。第一条必须通过 `npm run stock:finalize -- "<样本书>"` 的成片、发布文案、不可变 release、哈希、原子入队、队列重读和交付闭环，后续书目才允许最终渲染；批次完成后用 `npm run stock:verify` 读取并复核可发布库存。
+周补货时，Codex 会先用 `npm run stock:begin -- "<样本书>" "<后续书目>"` 建立批次。该命令会阻断已有生成标题、有效成片或生产台账历史的书目，`stock:finalize` 也会再次防止绕过。第一条必须通过 `npm run stock:finalize -- "<样本书>"` 的成片、发布文案、不可变 release、哈希、原子入队、队列重读和交付闭环，后续书目才允许最终渲染；批次完成后用 `npm run stock:verify` 读取并复核可发布库存。发现误入库批次时，先运行 `npm run stock:rollback -- --dry-run` 核对精确的 release 和成片哈希，再用显式确认参数执行可恢复回滚；不得用 episode 清理代替回滚。
 
 清理历史 episode 时先运行 `npm run cleanup:episodes -- --dry-run`；只有用户明确确认清理范围后才运行 `--apply`。删除前会先保存标准化书名，避免以后重复生产。
 
 生成过程使用带生命周期标记的独立临时目录：独立预览保留 24 小时，失败任务保留 72 小时，最终成片成功后立即清理。可以运行 `npm run cleanup:temp -- --dry-run` 查看待清理内容；项目不会自动删除 `tmp/` 中来源不明、没有生命周期标记的文件。
 
-发布前，`npm run publish:brief -- --position <序号>` 只从带 `READY` 标记的不可变 release 生成发布清单。抖音继续使用专用 Chrome 工作流：`npm run publish:start -- --position <序号> ...` 预填官方发布页并停在最终发布按钮前，只有 release、文案、队列状态和成片 SHA-256 完全一致的 `publish:confirm` 才会触发发布。小红书改为手动发布：`npm run publish:xiaohongshu -- --position <序号>` 用普通浏览器打开官方发布页，并在桌面上方显示不会被网页折叠的置顶面板；视频可以直接拖入上传区，标题和简介既可复制也可在用户点击后输入到刚刚聚焦的光标位置，标签会逐个输入并用键盘确认第一条平台建议，所有设置和最终话题都由用户核对并手工发布。小红书路径不会启动 Playwright、读取网页或点击发布。
+发布前，`npm run publish:brief -- --position <序号>` 只从带 `READY` 标记的不可变 release 生成发布清单。抖音继续使用专用 Chrome 工作流：`npm run publish:start -- --position <序号> ...` 预填官方发布页并停在最终发布按钮前，只有 release、文案、队列状态和成片 SHA-256 完全一致的 `publish:confirm` 才会触发发布。小红书使用人工发布：`npm run publish:xiaohongshu -- --position <序号>` 用普通浏览器打开官方发布页，并在桌面上方显示置顶面板；视频可以直接拖入上传区，标题和简介既可复制也可在用户点击后输入到刚刚聚焦的光标位置，标签会逐个输入并用键盘确认第一条平台建议，所有设置和最终话题都由用户核对并手工发布。面板不会读取网页或点击发布；关闭后不会检查作品列表、保存发布证明或更新队列发布状态。小红书不再维护独立的发布完成状态，库存、归档和日常自动化直接跟随同一 release 的抖音状态；缺少小红书凭证不再显示为“待发布”或“未发布”。
+
+本地生产历史由 `.agents/production-ledger.json` 记录：有效 render 表示“生成过”，带 `READY` 的不可变 release 表示“形成过发布包”，绑定同一 release ID 和 SHA-256 的官方凭证才表示“发布过”。首次对账运行 `npm run production:migrate`，日常验证运行 `npm run production:verify`，查看下一条安全的抖音待发布对象运行 `npm run publish:next`。活动队列只表示当前待办，序号不是历史身份。
 
 你也可以直接用自然语言操作，例如：
 

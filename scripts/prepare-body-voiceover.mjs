@@ -2,6 +2,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { EdgeTTS } from "@seepine/edge-tts";
 import { buildEdgeSubtitleSegments } from "./lib/body-timings.mjs";
 import { runCommandSync } from "./lib/command.mjs";
 import { validateBodyTimingArtifact } from "./lib/episode-checks.mjs";
@@ -20,13 +21,15 @@ import {
 } from "./lib/temp-lifecycle.mjs";
 import {
   DEFAULT_TTS_OPTIONS,
+  buildBodyTtsChunks,
   buildBodyTtsUnits,
   edgeSubtitleOutputPath,
 } from "./lib/voiceover-preparation.mjs";
 import { resolveBriefDisplayTitle } from "./lib/brief-display-title.mjs";
 
 const ROOT = process.cwd();
-const NODE_EDGE_TTS_PACKAGE = "node-edge-tts@1.2.10";
+const TTS_CHUNK_DELAY_MS = 15000;
+const TTS_RETRY_DELAY_MS = 30000;
 const [episodeName, ...cliArgs] = process.argv.slice(2);
 const requestedVersion = cliArgs[0] && !cliArgs[0].startsWith("--") ? cliArgs.shift() : undefined;
 const optionArgs = cliArgs;
@@ -70,6 +73,38 @@ function restoreTimingFile(timingsPath, backupPath, hadTimingFile) {
   }
 }
 
+function probeAudioDuration(audioPath) {
+  const result = run("ffprobe", [
+    "-v", "error",
+    "-show_entries", "format=duration",
+    "-of", "default=noprint_wrappers=1:nokey=1",
+    audioPath,
+  ], { stdio: "pipe" });
+  const duration = Number(String(result.stdout || "").trim());
+  if (!Number.isFinite(duration) || duration <= 0) throw new Error(`Invalid audio duration: ${audioPath}`);
+  return duration;
+}
+
+function formatConcatFilePath(filePath) {
+  const normalized = path.resolve(filePath).replaceAll("\\", "/");
+  if (normalized.includes("'")) throw new Error(`Unsupported apostrophe in TTS chunk path: ${filePath}`);
+  return `file '${normalized}'`;
+}
+
+function delay(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function synthesizeChunk(tts, text, index) {
+  try {
+    return await tts.call(text);
+  } catch (error) {
+    console.warn(`TTS chunk ${index + 1} failed once; retrying after ${TTS_RETRY_DELAY_MS} ms: ${String(error)}`);
+    await delay(TTS_RETRY_DELAY_MS);
+    return tts.call(text);
+  }
+}
+
 if (!episodeName) {
   console.error("Usage: node scripts/prepare-body-voiceover.mjs <episode-name> [script-version] [options]");
   process.exit(1);
@@ -88,7 +123,6 @@ const scriptValidation = validateBodyScript(rows);
 if (scriptValidation.errors.length) throw new Error(scriptValidation.errors.join("；"));
 const displayTitle = resolveBriefDisplayTitle(brief, episodeName);
 const ttsUnits = buildBodyTtsUnits(displayTitle, rows);
-const ttsRequestText = ttsUnits.join(" ");
 
 const workspace = createTempWorkspace(ROOT, {
   kind: "voiceover",
@@ -103,6 +137,8 @@ const candidateAudio = path.join(candidateDir, "body-voiceover.mp3");
 const generatedSubtitles = edgeSubtitleOutputPath(candidateAudio);
 const candidateEdgeSubtitles = path.join(candidateDir, "body-voiceover.edge-timings.json");
 const candidateInput = path.join(candidateDir, "body-voiceover-input.txt");
+const chunkDir = path.join(candidateDir, "chunks");
+const concatListPath = path.join(candidateDir, "body-voiceover-concat.txt");
 const audioDir = path.join(episodeDir, "audio");
 const audioPath = path.join(audioDir, "body-voiceover.mp3");
 const edgeSubtitlesPath = path.join(audioDir, "body-voiceover.edge-timings.json");
@@ -114,21 +150,42 @@ const hadTimingFile = fs.existsSync(timingsPath);
 try {
   fs.mkdirSync(candidateDir, { recursive: true });
   fs.writeFileSync(candidateInput, `${ttsUnits.join("\n")}\n`);
-  const args = [
-    "--yes",
-    NODE_EDGE_TTS_PACKAGE,
-    "-t", ttsRequestText,
-    "-f", candidateAudio,
-    "-v", ttsOptions.voice,
-    "-l", ttsOptions.lang,
-    "-o", ttsOptions.outputFormat,
-    `--rate=${ttsOptions.rate}`,
-    `--pitch=${ttsOptions.pitch}`,
-    `--timeout=${ttsOptions.timeout}`,
-    "--saveSubtitles",
-  ];
-  if (ttsOptions.proxy) args.push("--proxy", ttsOptions.proxy);
-  run("npx", args);
+  const tts = new EdgeTTS({
+    voice: ttsOptions.voice,
+    lang: ttsOptions.lang,
+    outputFormat: ttsOptions.outputFormat,
+    rate: ttsOptions.rate,
+    pitch: ttsOptions.pitch,
+    timeout: ttsOptions.timeout,
+    proxy: ttsOptions.proxy || undefined,
+  });
+  const chunks = buildBodyTtsChunks(ttsUnits);
+  const chunkPaths = [];
+  const combinedSubtitles = [];
+  let elapsedMs = 0;
+  fs.mkdirSync(chunkDir, { recursive: true });
+  for (const [index, chunk] of chunks.entries()) {
+    if (index > 0) await delay(TTS_CHUNK_DELAY_MS);
+    const generated = await synthesizeChunk(tts, chunk.join(" "), index);
+    const chunkPath = path.join(chunkDir, `chunk-${String(index + 1).padStart(2, "0")}.mp3`);
+    fs.writeFileSync(chunkPath, generated.data);
+    for (const item of generated.subtitles) {
+      combinedSubtitles.push({
+        ...item,
+        start: Number(item.start) + elapsedMs,
+        end: Number(item.end) + elapsedMs,
+      });
+    }
+    elapsedMs += probeAudioDuration(chunkPath) * 1000;
+    chunkPaths.push(chunkPath);
+  }
+  fs.writeFileSync(concatListPath, `${chunkPaths.map(formatConcatFilePath).join("\n")}\n`);
+  run("ffmpeg", [
+    "-hide_banner", "-loglevel", "error", "-y",
+    "-f", "concat", "-safe", "0", "-i", concatListPath,
+    "-c", "copy", candidateAudio,
+  ]);
+  fs.writeFileSync(generatedSubtitles, `${JSON.stringify(combinedSubtitles, null, 2)}\n`);
   if (!fs.existsSync(candidateAudio)) throw new Error(`node-edge-tts did not create audio: ${candidateAudio}`);
   if (!fs.existsSync(generatedSubtitles)) throw new Error(`node-edge-tts did not create subtitles: ${generatedSubtitles}`);
   fs.renameSync(generatedSubtitles, candidateEdgeSubtitles);

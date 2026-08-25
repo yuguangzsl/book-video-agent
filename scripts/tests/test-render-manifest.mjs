@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { assertManifestMediaMatches, describeManifestFile } from "../lib/render-manifest.mjs";
+import {
+  analyzeFirstFramePixels,
+  assertFirstFrameCover,
+  assertManifestMediaMatches,
+  describeManifestFile,
+} from "../lib/render-manifest.mjs";
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "book-video-manifest-test-"));
 const externalRoot = fs.mkdtempSync(path.join(os.tmpdir(), "book-video-manifest-external-"));
@@ -46,6 +51,21 @@ try {
   assert.throws(
     () => assertManifestMediaMatches(media, { ...media, audio: { ...media.audio, sampleRate: 44100 } }),
     /sample rate.*does not match actual MP4/u,
+  );
+
+  const blackFrame = analyzeFirstFramePixels(Buffer.alloc(100, 0), 10, 10);
+  assert.throws(() => assertFirstFrameCover(blackFrame), /first frame cover is black or nearly black/u);
+  const blackTitleCard = Buffer.alloc(100, 0);
+  blackTitleCard.fill(255, 0, 10);
+  assert.throws(
+    () => assertFirstFrameCover(analyzeFirstFramePixels(blackTitleCard, 10, 10)),
+    /first frame cover is black or nearly black/u,
+  );
+  const visibleFrame = Buffer.alloc(100, 64);
+  assert.doesNotThrow(() => assertFirstFrameCover(analyzeFirstFramePixels(visibleFrame, 10, 10)));
+  assert.throws(
+    () => analyzeFirstFramePixels(Buffer.alloc(99, 64), 10, 10),
+    /pixel bytes 99 do not match expected 100/u,
   );
 } finally {
   fs.rmSync(root, { recursive: true, force: true });

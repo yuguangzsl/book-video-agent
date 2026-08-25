@@ -15,7 +15,10 @@ try {
   recordGeneratedTitle(root, "《测试书》（经典版）");
   recordGeneratedTitle(root, "测试书");
   assert.deepEqual(readGeneratedTitleIndex(root), ["测试书"]);
-  assert.equal(checkBookEligibility(root, "《测试书》").duplicate, true);
+  const legacyClaim = checkBookEligibility(root, "《测试书》");
+  assert.equal(legacyClaim.duplicate, true);
+  assert.equal(legacyClaim.everGenerated, false);
+  assert.equal(legacyClaim.legacyDuplicateOnly, true);
   assert.throws(() => assertBookEligible(root, "测试书"), /already been generated/);
   assert.equal(assertBookEligible(root, "测试书", { maintenance: true }).eligible, true);
 
@@ -26,6 +29,8 @@ try {
     manifestReader: () => ({ manifest: { episode: { name: "另一册" } } }),
   });
   assert.equal(renderResult.duplicate, true);
+  assert.equal(renderResult.everGenerated, true);
+  assert.equal(renderResult.legacyDuplicateOnly, false);
   assert.deepEqual(renderResult.matches.validatedRenders, ["另一册"]);
 
   const warningResult = checkBookEligibility(root, "未生成", {

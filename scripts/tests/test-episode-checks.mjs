@@ -213,6 +213,7 @@ try {
     durationSeconds: 6.48,
     video: { codec: "h264", width: 720, height: 960, frameRate: 30 },
     audio: { codec: "aac", sampleRate: 48000, channels: 2 },
+    firstFrame: { meanLuma: 64, blackPixelRatio: 0.1, blackLumaThreshold: 24 },
   });
   const completed = validateCompletedEpisode(root, episodeName, "", {
     requirePublish: true,
@@ -253,6 +254,15 @@ try {
       mediaProbe: () => ({ ...mediaProbe(), video: { ...mediaProbe().video, width: 1080 } }),
     }),
     /dimensions.*do not match actual MP4/u,
+  );
+  assert.throws(
+    () => validateCompletedEpisode(root, episodeName, "", {
+      mediaProbe: () => ({
+        ...mediaProbe(),
+        firstFrame: { meanLuma: 8, blackPixelRatio: 0.95, blackLumaThreshold: 24 },
+      }),
+    }),
+    /first frame cover is black or nearly black/u,
   );
 
   write(path.join(episodeDir, "publish.json"), `${JSON.stringify({

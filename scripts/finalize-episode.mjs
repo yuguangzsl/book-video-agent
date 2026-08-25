@@ -8,6 +8,7 @@ import { recordGeneratedTitle } from "./lib/generated-title-index.mjs";
 import { upsertCompletedEpisodeIntoPublishQueue } from "./lib/publish-queue.mjs";
 import { createReleasePackage } from "./lib/release-package.mjs";
 import {
+  assertEpisodeCanFinalizeForReplenishment,
   assertEpisodeCanRenderForReplenishment,
   markReplenishmentEpisodePublishable,
 } from "./lib/replenishment-batch.mjs";
@@ -20,7 +21,8 @@ if (!episodeName) {
   process.exit(1);
 }
 
-assertEpisodeCanRenderForReplenishment(ROOT, episodeName);
+const replenishmentBatch = assertEpisodeCanRenderForReplenishment(ROOT, episodeName);
+assertEpisodeCanFinalizeForReplenishment(ROOT, episodeName, { batch: replenishmentBatch });
 const completed = validateCompletedEpisode(ROOT, episodeName, requestedVersion, {
   requirePublish: true,
   validateQueue: false,

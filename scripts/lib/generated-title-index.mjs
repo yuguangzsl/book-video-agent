@@ -1,6 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { writeFileAtomically } from "./filesystem.mjs";
+import {
+  findProductionWorksByIdentity,
+  readProductionLedger,
+} from "./production-ledger.mjs";
 import { readAndValidateRenderManifest } from "./render-manifest.mjs";
 import { normalizeDisplayTitle } from "./title-normalization.mjs";
 
@@ -72,15 +76,27 @@ export function checkBookEligibility(root, displayTitle, options = {}) {
   const indexMatches = readGeneratedTitleIndex(root).filter((title) => titleKey(title) === key);
   const renderScan = scanValidatedRenderTitles(root, options);
   const renderMatches = renderScan.titles.filter((title) => titleKey(title) === key);
-  const duplicate = indexMatches.length > 0 || renderMatches.length > 0;
+  const ledger = readProductionLedger(root);
+  const productionHistory = ledger ? findProductionWorksByIdentity(ledger, normalized) : [];
+  const everGenerated = productionHistory.some((work) => work.everGenerated) || renderMatches.length > 0;
+  const everReleased = productionHistory.some((work) => work.everReleased);
+  const duplicate = indexMatches.length > 0 || renderMatches.length > 0 || productionHistory.length > 0;
   return {
     displayTitle: normalized,
     eligible: !duplicate || Boolean(options.maintenance),
     duplicate,
+    everGenerated,
+    everReleased,
+    everPublished: {
+      douyin: productionHistory.some((work) => work.platforms.douyin.everPublished),
+      xiaohongshu: productionHistory.some((work) => work.platforms.xiaohongshu.everPublished),
+    },
+    legacyDuplicateOnly: indexMatches.length > 0 && !everGenerated,
     maintenance: Boolean(options.maintenance),
     matches: {
       titleIndex: indexMatches,
       validatedRenders: renderMatches,
+      productionHistory,
     },
     warnings: renderScan.warnings,
   };

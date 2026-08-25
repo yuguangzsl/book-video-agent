@@ -26,6 +26,7 @@
 - `720x960`, `30fps`, 3:4。
 - 玻璃碎片拼接开场、书单滚动、短黑场、结果页定格。
 - 结果页进入正文时无跳变；书名和作者持续常驻。
+- 最终 MP4 的第一帧直接作为发布封面，必须在可见的位图画面上显示书名和作者；黑色或近黑背景即使能看到白字也不通过。渲染时从正文自动选择首个合格画面前置，成片校验会实际解码 frame 0 并执行亮度门禁。
 - 正文使用 3 张 AI 氛围图慢推近和交叉淡入。
 - 文字使用白色德意黑风格和纯黑文字阴影，不加黑色承托层或卡片 UI。
 - 默认不超过 60 秒。
@@ -53,7 +54,9 @@ npm run stock:finalize -- "样本书" v1
 npm run stock:verify
 ```
 
-该命令以批次书目为范围，重新验证每条活动 MP4、manifest、`publish.json`、哈希和队列项，并从 Node 的 UTF-8 JSON 读取器输出库存快照。查看批次进度使用 `npm run stock:status`，只读查看当前活动队列使用 `npm run inventory:list`，不依赖批次状态复核现有队列使用 `npm run inventory:verify`；不要用未指定编码的 PowerShell `Get-Content` 直接判断 JSON 是否有效。
+该命令以批次书目为范围，重新验证每条活动 MP4、manifest、`publish.json`、release ID、哈希和队列项，并从 Node 的 UTF-8 JSON 读取器输出库存快照。查看批次进度使用 `npm run stock:status`，只读查看当前活动队列使用 `npm run inventory:list`，不依赖批次状态复核现有队列使用 `npm run inventory:verify`。历史生成、release 和平台凭证以本地生产账本为准：首次迁移或对账运行 `npm run production:migrate`，日常核验运行 `npm run production:verify`，查询下一条安全的抖音对象运行 `npm run publish:next`。不要用未指定编码的 PowerShell `Get-Content` 直接判断 JSON 是否有效。
+
+`stock:begin` 会对批次内全部书目执行非维护模式的重复资格检查，已有生成标题、有效成片或生产台账历史均阻断；`stock:finalize` 还会阻断脱离活动批次的重复入库。若完整批次被错误写入库存，先运行 `npm run stock:rollback -- --dry-run`，确认只命中该批次锁定的 `book + releaseId + renderSha256`，再运行 `npm run stock:rollback -- --apply --confirm-mistaken-stock-rollback`。回滚只归档活动队列项并退役批次，保留 episode、不可变 release、生产台账和纠错记录，也不会伪造平台发布证明。
 
 ## 本地视频输出语义
 
@@ -167,7 +170,7 @@ episodes/<book>/
 项目使用官方创作者中心页面发布，不调用逆向接口。平台选择器参考了 `dreammis/social-auto-upload` 的公开实现，但本项目保留独立的发布安全层：
 
 1. `npm run publish:brief -- --position <序号>` 从队列引用的不可变 release 生成清单，要求 `READY` 存在并重新核对 release 内容摘要、MP4 哈希和平台级文案；不再读取生成程序的脚本、音频或图片内部文件。
-2. `npm run publish:start -- --position <序号> --platforms douyin,xiaohongshu ...` 启动专用 Chrome。登录态只保存在 `.agents/browser-publisher/chrome-profile`，不得复制到 Git。
+2. 抖音使用 `npm run publish:start -- --position <序号> --platforms douyin ...` 启动专用 Chrome。小红书使用 `npm run publish:xiaohongshu -- --position <序号>` 打开普通浏览器和人工面板；面板关闭后不执行作品列表核验，也不更新小红书发布状态。小红书的运营完成状态跟随同一 release 的抖音状态，不再单独维护待发布、未发布或核验队列。登录态只保存在 `.agents/browser-publisher/chrome-profile`，不得复制到 Git。
 3. 工作进程上传精确文件、填写标题/简介/标签和已确认设置，验证账号与表单后停在最终发布按钮前。`npm run publish:status` 只读查看状态。
 4. 用户确认公开发布后，运行 `npm run publish:confirm -- --platform <平台或all> --confirm-sha <完整SHA-256>`。点击前再次读取不可变 release 和队列；release ID、精确哈希、平台文案、表单状态或会话任一不匹配时拒绝发布。
 5. 每个平台只点击一次发布。只有官方成功页、官方作品列表中的精确标题、作品 URL 或 work ID 等权威信号通过后，才调用带队列写锁的原子状态更新。失败、超时、验证码或选择器变化均不更新状态，也不自动重复点击。
@@ -187,7 +190,7 @@ episodes/<book>/
 2. 单期成片验证：`node scripts/render-episode-final.mjs "<book>" [script-version]` 必须通过内置的字幕数量、脚本版本、`720x960` 画幅、音轨、时长和 manifest 检查，才能替换活动媒体。
 3. 仓库验证：日常代码修改先运行无网络的 `npm run check:unit`；媒体授权记录运行 `npm run check:assets`；模板或媒体管线变化再运行 `npm run check:template`。`npm run check` 会聚合三者。它们验证仓库，不代替单期 MP4 验收。公开发布仓库前还要检查 Git 历史中的密钥、私人媒体和完整参考转录，并验证全新克隆初始化。
 
-周补货的可发布验收不靠新增对话规则完成：`stock:begin` 建立样本门，`stock:finalize` 完成单条入队事务，`stock:verify` 在库存读取前复核整个批次；对应行为必须有单元测试。`AGENTS.md` 只保留跨任务且长期稳定的约束，操作性故障修复落在脚本、测试和本手册。
+周补货的可发布验收不靠新增对话规则完成：`stock:begin` 建立样本门并执行全批次重复检查，`stock:finalize` 完成单条入队事务并提供第二道重复防线，`stock:verify` 在库存读取前复核整个批次，`stock:rollback` 可恢复地纠正误入库批次；对应行为必须有单元测试。`AGENTS.md` 只保留跨任务且长期稳定的约束，操作性故障修复落在脚本、测试和本手册。
 
 ## 版权边界
 

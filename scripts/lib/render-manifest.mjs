@@ -15,6 +15,10 @@ import {
   toPortableProjectPath,
 } from "./artifact-paths.mjs";
 
+export const FIRST_FRAME_MAX_BLACK_PIXEL_RATIO = 0.8;
+export const FIRST_FRAME_MIN_MEAN_LUMA = 18;
+export const FIRST_FRAME_BLACK_LUMA_THRESHOLD = 24;
+
 export function sha256File(filePath) {
   return createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
 }
@@ -50,6 +54,68 @@ function parseFrameRate(value) {
     : 0;
 }
 
+export function analyzeFirstFramePixels(buffer, width, height) {
+  assert(Buffer.isBuffer(buffer), "first frame pixels must be a Buffer");
+  const expectedBytes = Number(width) * Number(height);
+  assert(Number.isInteger(expectedBytes) && expectedBytes > 0, "first frame dimensions must be positive integers");
+  assert(
+    buffer.length === expectedBytes,
+    `first frame pixel bytes ${buffer.length} do not match expected ${expectedBytes}`,
+  );
+
+  let lumaTotal = 0;
+  let blackPixels = 0;
+  for (const luma of buffer) {
+    lumaTotal += luma;
+    if (luma <= FIRST_FRAME_BLACK_LUMA_THRESHOLD) blackPixels += 1;
+  }
+  return {
+    meanLuma: Number((lumaTotal / expectedBytes).toFixed(2)),
+    blackPixelRatio: Number((blackPixels / expectedBytes).toFixed(4)),
+    blackLumaThreshold: FIRST_FRAME_BLACK_LUMA_THRESHOLD,
+  };
+}
+
+export function assertFirstFrameCover(firstFrame) {
+  assert(firstFrame && typeof firstFrame === "object", "first frame cover metrics are missing");
+  const meanLuma = Number(firstFrame.meanLuma);
+  const blackPixelRatio = Number(firstFrame.blackPixelRatio);
+  assert(Number.isFinite(meanLuma), "first frame cover mean luma is invalid");
+  assert(Number.isFinite(blackPixelRatio), "first frame cover black pixel ratio is invalid");
+  assert(
+    meanLuma >= FIRST_FRAME_MIN_MEAN_LUMA
+      && blackPixelRatio <= FIRST_FRAME_MAX_BLACK_PIXEL_RATIO,
+    `first frame cover is black or nearly black (mean luma ${meanLuma.toFixed(2)}, black pixels ${(blackPixelRatio * 100).toFixed(1)}%; requires mean >= ${FIRST_FRAME_MIN_MEAN_LUMA} and black pixels <= ${(FIRST_FRAME_MAX_BLACK_PIXEL_RATIO * 100).toFixed(0)}%)`,
+  );
+}
+
+export function probeVideoFrameLuma(filePath, video, timestampSeconds = 0) {
+  const width = Number(video?.width || 0);
+  const height = Number(video?.height || 0);
+  assert(Number.isInteger(width) && width > 0 && Number.isInteger(height) && height > 0,
+    `cannot probe first frame without valid video dimensions: ${filePath}`);
+  assert(Number.isFinite(timestampSeconds) && timestampSeconds >= 0,
+    `frame probe timestamp must be non-negative: ${timestampSeconds}`);
+  const args = ["-v", "error", "-nostdin", "-i", filePath];
+  if (timestampSeconds > 0) args.push("-ss", String(timestampSeconds));
+  args.push(
+    "-map", "0:v:0",
+    "-frames:v", "1",
+    "-vf", `scale=${width}:${height},format=gray`,
+    "-pix_fmt", "gray",
+    "-f", "rawvideo",
+    "pipe:1",
+  );
+  const result = spawnCommandSync("ffmpeg", args, {
+    encoding: "buffer",
+    maxBuffer: Math.max(width * height + 1024 * 1024, 4 * 1024 * 1024),
+  });
+  if (result.status !== 0) {
+    throw new Error(`ffmpeg frame probe failed for ${filePath}: ${String(result.stderr || result.error?.message || "unknown error").trim()}`);
+  }
+  return analyzeFirstFramePixels(result.stdout, width, height);
+}
+
 export function probeMediaFile(filePath) {
   const args = [
     "-v", "error",
@@ -69,19 +135,21 @@ export function probeMediaFile(filePath) {
   assert(audio, `ffprobe found no audio stream: ${filePath}`);
   assert(Number.isFinite(duration) && duration > 0, `ffprobe reported invalid duration for ${filePath}`);
   const frameRate = parseFrameRate(video.avg_frame_rate) || parseFrameRate(video.r_frame_rate);
+  const videoMetadata = {
+    codec: video.codec_name || "unknown",
+    width: Number(video.width || 0),
+    height: Number(video.height || 0),
+    frameRate: Number(frameRate.toFixed(3)),
+  };
   return {
     durationSeconds: Number(duration.toFixed(2)),
-    video: {
-      codec: video.codec_name || "unknown",
-      width: Number(video.width || 0),
-      height: Number(video.height || 0),
-      frameRate: Number(frameRate.toFixed(3)),
-    },
+    video: videoMetadata,
     audio: {
       codec: audio.codec_name || "unknown",
       sampleRate: Number(audio.sample_rate || 0),
       channels: Number(audio.channels || 0),
     },
+    firstFrame: probeVideoFrameLuma(filePath, videoMetadata),
   };
 }
 
@@ -211,6 +279,7 @@ export function readAndValidateRenderManifest(root, manifestPath, options = {}) 
       || resolveProjectPath(root, manifest.output.file, "output.file");
     media = (options.probeMedia || probeMediaFile)(outputPath);
     assertManifestMediaMatches(manifest.output, media, options);
+    assertFirstFrameCover(media.firstFrame);
   }
   return { manifest, media, ...result };
 }
