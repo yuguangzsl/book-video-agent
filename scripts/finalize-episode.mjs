@@ -7,6 +7,7 @@ import {
 import { recordGeneratedTitle } from "./lib/generated-title-index.mjs";
 import { upsertCompletedEpisodeIntoPublishQueue } from "./lib/publish-queue.mjs";
 import { createReleasePackage } from "./lib/release-package.mjs";
+import { validateEpisodeQa } from "./lib/episode-qa.mjs";
 import {
   assertEpisodeCanFinalizeForReplenishment,
   assertEpisodeCanRenderForReplenishment,
@@ -27,6 +28,8 @@ const completed = validateCompletedEpisode(ROOT, episodeName, requestedVersion, 
   requirePublish: true,
   validateQueue: false,
 });
+const legacyActiveBatch = replenishmentBatch?.status === "active" && replenishmentBatch.qaRequired === undefined;
+if (!legacyActiveBatch) validateEpisodeQa(ROOT, completed);
 const release = createReleasePackage(ROOT, completed);
 recordGeneratedTitle(ROOT, completed.episodeName);
 upsertCompletedEpisodeIntoPublishQueue(ROOT, { ...completed, release });

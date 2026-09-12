@@ -7,8 +7,6 @@ import {
   platformPrepareFunction,
   platformPublishFunction,
   topicCandidateMatches,
-  xiaohongshuListTimestamp,
-  xiaohongshuPublishClickPosition,
 } from "../lib/platform-publishers.mjs";
 
 assert.equal(topicCandidateMatches("#大地之上", "#大地之上"), true);
@@ -55,17 +53,8 @@ assert.equal(platformCopyFor(platformBrief, "douyin").title, "douyin title");
 assert.equal(platformCopyFor(platformBrief, "xiaohongshu").title, "xiaohongshu title");
 assert.equal(typeof platformPrepareFunction("douyin"), "function");
 assert.equal(typeof platformPublishFunction("douyin"), "function");
-assert.throws(() => platformPrepareFunction("xiaohongshu"), /manual publication panel/u);
-assert.throws(() => platformPublishFunction("xiaohongshu"), /publish manually/u);
-
-assert.deepEqual(xiaohongshuPublishClickPosition(680, 90), { x: 414.8, y: 45 });
-assert.throws(() => xiaohongshuPublishClickPosition(0, 90), /width must be positive/u);
-assert.throws(() => xiaohongshuPublishClickPosition(680, 0), /height must be positive/u);
-assert.equal(
-  new Date(xiaohongshuListTimestamp("2026-07-30 15:19")).getFullYear(),
-  2026,
-);
-assert.equal(xiaohongshuListTimestamp("昨天 15:19"), null);
+assert.throws(() => platformPrepareFunction("xiaohongshu"), /Unsupported publication platform/u);
+assert.throws(() => platformPublishFunction("xiaohongshu"), /Unsupported publication platform/u);
 assert.equal(
   new Date(douyinListTimestamp("2026年07月30日 15:19")).getFullYear(),
   2026,

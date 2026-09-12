@@ -14,6 +14,7 @@ import {
   beginReplenishmentBatch,
   markReplenishmentEpisodePublishable,
   readReplenishmentBatch,
+  replacePendingReplenishmentBook,
 } from "../lib/replenishment-batch.mjs";
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "book-video-replenishment-test-"));
@@ -37,6 +38,7 @@ try {
     now: new Date("2026-07-27T01:00:00.000Z"),
   });
   assert.equal(batch.sampleBook, "样本书");
+  assert.equal(batch.qaRequired, true);
   // An in-progress batch is a retryable transaction. Once the sample is finalized,
   // it is deliberately present in the generated-title index, so the matching batch
   // must be returned before the new-batch duplicate preflight runs.
@@ -52,10 +54,16 @@ try {
     now: new Date("2026-07-27T02:00:00.000Z"),
   });
   assert.doesNotThrow(() => assertEpisodeCanRenderForReplenishment(root, "第二本"));
+  replacePendingReplenishmentBook(root, "第三本", "替补书", {
+    checkBookEligibility: () => ({ eligible: true, matches: {} }),
+    now: new Date("2026-07-27T02:30:00.000Z"),
+  });
+  assert.equal(readReplenishmentBatch(root).items[2].book, "替补书");
+  assert.equal(readReplenishmentBatch(root).abandonedItems[0].book, "第三本");
   markReplenishmentEpisodePublishable(root, result("第二本", "b"), "第二本交付", {
     now: new Date("2026-07-27T03:00:00.000Z"),
   });
-  markReplenishmentEpisodePublishable(root, result("第三本", "c"), "第三本交付", {
+  markReplenishmentEpisodePublishable(root, result("替补书", "c"), "第三本交付", {
     now: new Date("2026-07-27T04:00:00.000Z"),
   });
   const completed = readReplenishmentBatch(root, { required: true });

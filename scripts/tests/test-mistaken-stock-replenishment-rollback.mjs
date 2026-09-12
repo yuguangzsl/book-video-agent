@@ -153,7 +153,7 @@ try {
     assert.equal(entry.reason, "mistaken-stock-replenishment");
     assert.equal(entry.correction.rollbackId, applied.rollbackId);
     assert.equal(entry.item.douyinStatus, "pending");
-    assert.equal(entry.item.xiaohongshuStatus, "pending");
+    assert.equal(entry.item.xiaohongshuStatus, undefined);
     assert.equal(entry.item.douyinPublication, undefined);
     assert.equal(entry.item.xiaohongshuPublication, undefined);
   }

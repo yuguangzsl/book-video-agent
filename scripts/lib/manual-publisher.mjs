@@ -36,6 +36,7 @@ export function buildXiaohongshuManualPayload(brief, options = {}) {
     schemaVersion: 1,
     platform: "xiaohongshu",
     testMode: options.testMode === true,
+    preparedAt: options.now instanceof Date ? options.now.toISOString() : new Date().toISOString(),
     publishUrl: XIAOHONGSHU_PUBLISH_URL,
     queuePosition: brief.queuePosition,
     book: brief.book,

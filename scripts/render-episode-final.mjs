@@ -3,6 +3,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { runCommandSync } from "./lib/command.mjs";
+import { resolveHyperframesRuntime } from "./lib/hyperframes-runtime.mjs";
+import { createRenderTiming } from "./lib/render-timing.mjs";
 import { buildCaptionInspectTimes } from "./lib/caption-layout.mjs";
 import { validateEpisodeForRender } from "./lib/episode-checks.mjs";
 import {
@@ -38,6 +40,8 @@ import {
 } from "./lib/temp-lifecycle.mjs";
 
 const ROOT = process.cwd();
+const timing = createRenderTiming();
+process.once("exit", (code) => timing.finish(code));
 const INTRO_TRIM_SECONDS = 2.38;
 const INTRO_OFFSET_MS = Math.round(INTRO_TRIM_SECONDS * 1000);
 const FINAL_BGM_BASE_VOLUME = 0.32;
@@ -117,33 +121,37 @@ const introScrollSfxDelayMs = Math.round(INTRO_SCROLL_SFX_START_SECONDS * 1000);
 const introScrollSfxFadeOutStart = Number((introScrollSfxDuration - INTRO_SCROLL_SFX_FADE_OUT_SECONDS).toFixed(2));
 
 function run(command, args, options = {}) {
-  return runCommandSync(command, args, {
+  return timing.measure(options.stage || command, () => runCommandSync(command, args, {
     cwd: options.cwd || ROOT,
     stdio: "inherit",
     env: options.env || process.env,
-  });
+  }));
 }
 
-function validateHyperframesWorkspace(workspacePath, inspectTimes) {
-  const packageName = `hyperframes@${HYPERFRAMES_VERSION}`;
+let hyperframesRuntime;
+function runHyperframes(args, options) {
+  return run(hyperframesRuntime.command, [...hyperframesRuntime.args, ...args], options);
+}
+
+function validateHyperframesWorkspace(workspacePath, inspectTimes, label) {
   const env = {
     ...process.env,
     PRODUCER_PAGE_NAVIGATION_TIMEOUT_MS: String(HYPERFRAMES_CHECK_TIMEOUT_MS),
   };
-  run("npx", ["--yes", packageName, "lint", "--json", workspacePath], { env });
-  run("npx", [
-    "--yes", packageName, "validate", "--json", "--no-contrast",
+  runHyperframes(["lint", "--json", workspacePath], { env, stage: `${label}.lint` });
+  runHyperframes([
+    "validate", "--json", "--no-contrast",
     "--timeout", String(HYPERFRAMES_CHECK_TIMEOUT_MS), workspacePath,
-  ], { env });
+  ], { env, stage: `${label}.validate` });
   const inspectArgs = [
-    "--yes", packageName, "inspect", "--json",
+    "inspect", "--json",
     "--strict", "--timeout", String(HYPERFRAMES_CHECK_TIMEOUT_MS), "--at", inspectTimes.join(","), workspacePath,
   ];
   try {
-    run("npx", inspectArgs, { env });
+    runHyperframes(inspectArgs, { env, stage: `${label}.inspect` });
   } catch (error) {
     console.warn(`HyperFrames inspect failed once; retrying the same workspace and sample set: ${error.message}`);
-    run("npx", inspectArgs, { env });
+    runHyperframes(inspectArgs, { env, stage: `${label}.inspect.retry` });
   }
 }
 
@@ -261,7 +269,7 @@ if (!fs.existsSync(INTRO_SCROLL_SFX_PATH)) {
 
 const bgmPath = getBgmPath(bgmArg);
 console.log(`Using BGM: ${path.basename(bgmPath)}`);
-const preflight = validateEpisodeForRender(ROOT, episodeName, scriptVersion);
+const preflight = timing.measure("preflight", () => validateEpisodeForRender(ROOT, episodeName, scriptVersion));
 for (const warning of preflight.warnings) console.warn(`Pre-render warning: ${warning}`);
 const brief = readJsonFile(briefPath);
 const firstFrameTitle = resolveFirstFrameTitleConfig(brief);
@@ -324,15 +332,17 @@ candidateManifestPath = path.join(finalCandidateDir, path.basename(manifestPath)
 try {
   fs.mkdirSync(rendersDir, { recursive: true });
   run("node", ["scripts/create-episode-preview.mjs", episodeName, scriptVersion], {
+    stage: "preview.create",
     env: { ...process.env, BOOK_VIDEO_WORK_DIR: previewDir },
   });
-  validateHyperframesWorkspace(introDir, INTRO_INSPECT_TIMES);
-  validateHyperframesWorkspace(bodyDir, buildCaptionInspectTimes(preflight.timings.captions, bodyDuration));
+  hyperframesRuntime = timing.measure("hyperframes.resolve", () => resolveHyperframesRuntime(ROOT, HYPERFRAMES_VERSION));
+  validateHyperframesWorkspace(introDir, INTRO_INSPECT_TIMES, "intro");
+  validateHyperframesWorkspace(bodyDir, buildCaptionInspectTimes(preflight.timings.captions, bodyDuration), "body");
   fs.mkdirSync(finalCandidateDir, { recursive: true });
-  run("node", ["scripts/process-voiceover.mjs", introVoice, introStoryVoice, "story"]);
-  run("node", ["scripts/process-voiceover.mjs", bodyVoice, bodyStoryVoice, "story"]);
-  run("npx", ["--yes", `hyperframes@${HYPERFRAMES_VERSION}`, "render", "--quality", "standard", "--output", introVideo, introDir]);
-  run("npx", ["--yes", `hyperframes@${HYPERFRAMES_VERSION}`, "render", "--quality", "standard", "--output", bodyVideo, bodyDir]);
+  run("node", ["scripts/process-voiceover.mjs", introVoice, introStoryVoice, "story"], { stage: "intro.voice" });
+  run("node", ["scripts/process-voiceover.mjs", bodyVoice, bodyStoryVoice, "story"], { stage: "body.voice" });
+  runHyperframes(["render", "--quality", "standard", "--output", introVideo, introDir], { stage: "intro.render" });
+  runHyperframes(["render", "--quality", "standard", "--output", bodyVideo, bodyDir], { stage: "body.render" });
 
   run("ffmpeg", [
     "-y",
@@ -381,7 +391,7 @@ try {
     "+faststart",
     "-shortest",
     candidateContentOutputPath,
-  ]);
+  ], { stage: "content.encode" });
 
   if (firstFrameTitleEnabled) {
     const coverCandidates = buildFirstFrameCoverSourceCandidates(
@@ -393,11 +403,11 @@ try {
     const rejectedCovers = [];
     for (const sourceSeconds of coverCandidates) {
       const contentSourceSeconds = Number((INTRO_TRIM_SECONDS + sourceSeconds).toFixed(6));
-      const metrics = probeVideoFrameLuma(
+      const metrics = timing.measure("cover.probe", () => probeVideoFrameLuma(
         candidateContentOutputPath,
         { width: VIDEO_WIDTH, height: VIDEO_HEIGHT },
         contentSourceSeconds,
-      );
+      ));
       try {
         assertFirstFrameCover(metrics);
         selectedCover = { sourceSeconds, metrics };
@@ -462,10 +472,10 @@ try {
       "+faststart",
       "-shortest",
       candidateOutputPath,
-    ]);
+    ], { stage: "cover.encode" });
   }
 
-  const mediaMetadata = probeMediaFile(candidateOutputPath);
+  const mediaMetadata = timing.measure("final.probe", () => probeMediaFile(candidateOutputPath));
   assertFirstFrameCover(mediaMetadata.firstFrame);
   if (mediaMetadata.video.width !== VIDEO_WIDTH || mediaMetadata.video.height !== VIDEO_HEIGHT) {
     throw new Error(`Invalid final video dimensions: ${mediaMetadata.video.width}x${mediaMetadata.video.height}`);
@@ -473,15 +483,15 @@ try {
   if (mediaMetadata.durationSeconds > MAX_FINAL_DURATION_SECONDS + FINAL_DURATION_TOLERANCE_SECONDS && !ALLOW_OVER_60_SECONDS) {
     throw new Error(`Final video is ${mediaMetadata.durationSeconds.toFixed(2)}s; maximum is ${MAX_FINAL_DURATION_SECONDS}s`);
   }
-  writeRenderManifest(candidateManifestPath, mediaMetadata);
+  timing.measure("manifest.write", () => writeRenderManifest(candidateManifestPath, mediaMetadata));
   const candidateManifest = readJsonFile(candidateManifestPath);
-  readAndValidateRenderManifest(ROOT, candidateManifestPath, {
+  timing.measure("manifest.validate", () => readAndValidateRenderManifest(ROOT, candidateManifestPath, {
     skipManifestPathCheck: true,
     fileOverrides: { [candidateManifest.output.file]: candidateOutputPath },
-  });
-  activateFinalRender(candidateOutputPath, outputPath, candidateManifestPath, manifestPath);
+  }));
+  timing.measure("final.activate", () => activateFinalRender(candidateOutputPath, outputPath, candidateManifestPath, manifestPath));
   try {
-    removeTempWorkspace(ROOT, previewDir);
+    timing.measure("workspace.cleanup", () => removeTempWorkspace(ROOT, previewDir));
   } catch (cleanupError) {
     try {
       updateTempWorkspace(ROOT, previewDir, {

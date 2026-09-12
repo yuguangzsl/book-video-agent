@@ -128,6 +128,15 @@ export function requireManagedTempWorkspace(root, workspacePath) {
   return resolved;
 }
 
+export function readManagedTempWorkspaceMetadata(root, workspacePath) {
+  const resolved = requireManagedTempWorkspace(root, workspacePath);
+  const metadata = readMetadata(resolved);
+  return {
+    ...metadata,
+    details: { ...(metadata.details || {}) },
+  };
+}
+
 export function updateTempWorkspace(root, workspacePath, options = {}) {
   const resolved = requireManagedTempWorkspace(root, workspacePath);
   const current = readMetadata(resolved);

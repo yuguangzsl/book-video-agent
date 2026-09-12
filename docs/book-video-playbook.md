@@ -15,11 +15,31 @@
 6. 音频制作：默认使用全局 `text-to-speech` Skill，通过 `node-edge-tts` 和 `zh-CN-YunxiNeural` 生成正文口播，语速 `-8%`、音调 `-2Hz`；用户明确选择其他声音、韵律或提供自己的音频时按用户选择处理。生成配音时建立独立的 TTS 输入副本，为缺少结尾标点的标题和正文单元补充明确句号并保存服务字幕 JSON，不修改对话中展示的 `《书名》` 或 `script.csv`。
 7. 配音与时间轴：Agent 生成配音时运行 `node scripts/prepare-body-voiceover.mjs "<book>" [script-version]`，脚本会同时保存 Edge TTS 词边界并生成 `body-timings.json`；用户提供音频时才单独运行 `scripts/create-body-timings.mjs`，以 ASR 或语音停顿作为回退参考。`script.csv` 始终是字幕真源。
 8. 对齐渲染：裁剪 BGM 到视频长度并完成混音；最终 MP4 同目录生成同名 `.manifest.json`，记录脚本版本、实际 BGM、混音参数、输入素材哈希和成片规格。
-9. 验收替换：检查画幅、时长、字幕、音频和模板连续性。新方案通过技术检查后覆盖旧方案，保持每期只有一套活动资产。最终渲染成功只代表成片文件有效，不代表已经成为可发布库存。
+9. 自动质检：最终渲染后运行 `npm run qa:prepare -- "<book>" [script-version] [rework-count]`，抽取封面、片头、每次正文场景切换和结尾帧，检查亮度、精确与近似重复图、异常静音、平均音量和削波。Codex 必须检查书名作者可见、字幕无遮挡、画面贴题且场景可区分，并用独立 Whisper ASR 抽查开头、中段、结尾。审阅结果通过 `npm run qa:complete -- "<book>" "<review.json>" [script-version]` 写入哈希绑定的 `qa.json`。失败只返工对应图片、配音或时间轴，最多两次；仍失败则放弃该候选，不创建 release。
 10. 发布文案：最终渲染后、上传前研究同主题高互动样本，提炼标题和简介结构，生成 3 个原创标题候选、1 个选定简介和 3-5 个标签，并写入本地 `publish.json`。
-11. 入队交付：运行 `npm run stock:finalize -- "<book>" [script-version]`。该命令按固定顺序重新校验成片、校验 `publish.json` 和输入哈希、创建以发布内容摘要为 ID 的不可变 release（独立视频、`release.json`、最后写入的 `READY` 标记）、写入生成书名索引、原子写入发布队列、从磁盘重读队列、再次核对队列项，最后使用重读得到的队列项生成三字段交付文本。文案、策略或成片变化都会形成新 release；旧平台状态和证明只进入历史，不得继承给新 release。任一步失败都不得把该视频计入可发布库存。
+11. 入队交付：运行 `npm run stock:finalize -- "<book>" [script-version]`。该命令先验证绑定当前脚本、音频、图片、manifest 和 MP4 哈希的 `qa.json`，再校验成片和 `publish.json`、创建不可变 release（独立视频、`release.json`、最后写入的 `READY` 标记）、写入生成书名索引、原子写入发布队列、从磁盘重读队列并生成交付文本。文案、策略或成片变化都会形成新 release；旧平台状态和证明只进入历史，不得继承给新 release。任一步失败都不得把该视频计入可发布库存。
 
 片头固定使用 `templates/shared-video-template/intro/default-book-list.json` 中的六本书，不依赖 `book-pipeline.example.csv`，也不排除本期目标书；目标书可以先在滚动中出现，最后再定格到目标页。禁止使用“书名一”“作者一”等占位文本。正文字幕必须由 `script.csv` 和 `body-timings.json` 生成，时间轴数量不完整时禁止渲染。
+
+## 统一自动化编排
+
+统一入口只负责持久化状态、验证身份和给 Codex 返回当前唯一合法 action；研究、写作、生图和视觉判断仍由 Codex 执行：
+
+```powershell
+npm run workflow -- replenish
+npm run workflow -- publish-next
+npm run workflow -- status [--mode replenish|publish-next]
+npm run workflow -- resume --mode <mode> --action-id <sha256>
+npm run workflow -- verify
+```
+
+每次运行记录保存在 `.agents/workflow-runs/<runId>.json`，含输入哈希、阶段、action ID、payload 哈希、尝试次数、产物和错误分类。恢复前必须重新验证活动队列、生产台账、release ID、MP4 SHA-256 与当前 action；已完成 action 不得再次执行。`submission_unknown` 或 `published_unrecorded` 只能执行已有抖音会话核验，禁止重传。明确的提交前失败最多创建三个会话；登录失效、验证码、身份或哈希不匹配、校验失败和未知错误立即停止。
+
+QA 审阅 JSON 必须回填 `qa-draft.json` 的 SHA-256，防止旧审阅误用于新成片。三个 ASR 样本都要使用草稿指定的 `startSeconds`/`endSeconds`，并保存 `position`、独立转录 `transcript`、对应 `scriptExcerpt`、`similarity`（至少 0.8）和 `match: true`；只写“通过”而没有比较证据不会生成 `qa.json`。
+
+补货只看有效 `READY` release 的抖音 pending 数量：每次补货都补满 7 条（手动和定时补货均适用），达到 7 条静默。候选信号有效期 7 天，短名单至少约为目标数三倍；不足时最多扩展 3 轮、累计 60 个规范化书目。第一本仍是端到端样本门，后续逐本完成脚本、素材、配音、渲染、QA、发布文案、release 和入队。自动补货不等待文案或成片确认，但不会公开发布。
+
+每日发布只处理队首一条安全的抖音 pending release。抖音精确标题和当前视口证明通过后，workflow 才允许为同一 release 打开小红书人工面板；不等待面板关闭，不核验小红书列表，也不写小红书发布状态。补货入口优先核验并返回已有工作流的当前动作，不改变 run 或 action 身份；没有对应工作流的活动旧批次仍返回 `legacy_active_batch`。发布入口在活动旧批次存在时仍阻塞。
 
 ## 固定输出规则
 
@@ -32,9 +52,9 @@
 - 默认不超过 60 秒。
 - 最终成片通过 `npm run stock:finalize -- "<book>" [script-version]` 或 `npm run check:episode -- "<book>" [script-version] --delivery` 生成三字段交付文本；预发布预览通过 `npm run preview:delivery -- "<absolute-preview-path>"` 生成单字段文本且不读取 `publish.json`。两者都不直接嵌入对话预览。
 
-## 周补货可执行门禁
+## 补货可执行门禁
 
-周补货在第一次最终渲染前必须建立批次，参数顺序就是生产顺序，第一本是端到端样本：
+补货在第一次最终渲染前必须建立批次，参数顺序就是生产顺序，第一本是端到端样本：
 
 ```powershell
 npm run stock:begin -- "样本书" "第二本" "第三本"
@@ -140,6 +160,8 @@ episodes/<book>/
   script.csv
   prompts.csv
   publish.json   # local, ignored; 热门样本研究和发布文案
+  qa.json        # local, ignored; 绑定当前输入和成片哈希的 QA 结果
+  qa/            # local, ignored; 审阅帧和 QA 草稿
   images/       # local, ignored
   audio/        # local, ignored
   renders/      # local, ignored
@@ -187,7 +209,7 @@ episodes/<book>/
 ## 验证层级
 
 1. 文案验证：请求用户确认前运行 `node scripts/validate-script.mjs "<book>"`。
-2. 单期成片验证：`node scripts/render-episode-final.mjs "<book>" [script-version]` 必须通过内置的字幕数量、脚本版本、`720x960` 画幅、音轨、时长和 manifest 检查，才能替换活动媒体。
+2. 单期成片验证：`node scripts/render-episode-final.mjs "<book>" [script-version]` 必须通过内置的字幕数量、脚本版本、`720x960` 画幅、音轨、时长和 manifest 检查；之后必须完成 `qa:prepare` 和 `qa:complete`，`qa.json` 的任一绑定哈希变化都会阻止 `stock:finalize`。
 3. 仓库验证：日常代码修改先运行无网络的 `npm run check:unit`；媒体授权记录运行 `npm run check:assets`；模板或媒体管线变化再运行 `npm run check:template`。`npm run check` 会聚合三者。它们验证仓库，不代替单期 MP4 验收。公开发布仓库前还要检查 Git 历史中的密钥、私人媒体和完整参考转录，并验证全新克隆初始化。
 
 周补货的可发布验收不靠新增对话规则完成：`stock:begin` 建立样本门并执行全批次重复检查，`stock:finalize` 完成单条入队事务并提供第二道重复防线，`stock:verify` 在库存读取前复核整个批次，`stock:rollback` 可恢复地纠正误入库批次；对应行为必须有单元测试。`AGENTS.md` 只保留跨任务且长期稳定的约束，操作性故障修复落在脚本、测试和本手册。

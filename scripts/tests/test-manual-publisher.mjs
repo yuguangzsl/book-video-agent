@@ -2,20 +2,12 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { spawn, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import {
   buildXiaohongshuManualPayload,
   XIAOHONGSHU_PUBLISH_URL,
 } from "../lib/manual-publisher.mjs";
-import {
-  assertManualXiaohongshuVerificationBrief,
-  manualXiaohongshuVerificationFailureStatus,
-  manualXiaohongshuVerificationStatusPath,
-  manualPanelProcessIsRunning,
-  validateManualXiaohongshuVerificationPayload,
-  waitForManualPanelClose,
-} from "../lib/manual-xiaohongshu-verification.mjs";
 import {
   assertBrowserAutomationPlatforms,
   assertReadOnlyVerificationPlatforms,
@@ -60,7 +52,6 @@ const payloadPath = path.join(testRoot, "payload.json");
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const panelScript = path.resolve(scriptDir, "..", "publish-xiaohongshu-panel.ps1");
 const launcherScript = path.resolve(scriptDir, "..", "publish-xiaohongshu-manual.mjs");
-const verifierScript = path.resolve(scriptDir, "..", "verify-xiaohongshu-manual.mjs");
 
 try {
   fs.writeFileSync(videoPath, "test-video", "utf8");
@@ -91,6 +82,7 @@ try {
 
   assert.equal(payload.publishUrl, XIAOHONGSHU_PUBLISH_URL);
   assert.equal(payload.testMode, false);
+  assert.equal(Number.isFinite(Date.parse(payload.preparedAt)), true);
   assert.equal(payload.videoPath, videoPath);
   assert.equal(payload.title, "小红书标题");
   assert.equal(payload.description, "小红书简介");
@@ -102,57 +94,6 @@ try {
     { label: "允许下载", value: "关闭" },
     { label: "商业推广", value: "关闭" },
   ]);
-
-  const verificationPayload = validateManualXiaohongshuVerificationPayload({
-    ...payload,
-    launchedAt: "2026-08-10T06:00:00.000Z",
-    account: { name: "测试账号", id: "123456" },
-  });
-  assert.deepEqual(verificationPayload.account, { name: "测试账号", id: "123456" });
-  assert.equal(
-    manualXiaohongshuVerificationStatusPath(testRoot, verificationPayload.releaseId),
-    path.join(testRoot, ".agents", "manual-publisher", "xiaohongshu", `${verificationPayload.releaseId}.verification.json`),
-  );
-  const verificationBrief = {
-    queuePosition: verificationPayload.queuePosition,
-    book: verificationPayload.book,
-    releaseId: verificationPayload.releaseId,
-    renderSha256: verificationPayload.renderSha256,
-    videoPath: verificationPayload.videoPath,
-    platformCopy: { xiaohongshu: { title: verificationPayload.title } },
-    queueStatus: { xiaohongshu: "pending" },
-  };
-  assert.deepEqual(
-    assertManualXiaohongshuVerificationBrief(verificationPayload, verificationBrief),
-    { alreadyPublished: false },
-  );
-  assert.deepEqual(
-    assertManualXiaohongshuVerificationBrief(verificationPayload, {
-      ...verificationBrief,
-      queueStatus: { xiaohongshu: "published" },
-    }),
-    { alreadyPublished: true },
-  );
-  assert.throws(
-    () => assertManualXiaohongshuVerificationBrief(verificationPayload, {
-      ...verificationBrief,
-      renderSha256: "e".repeat(64),
-    }),
-    /render changed/u,
-  );
-  assert.equal(
-    manualXiaohongshuVerificationFailureStatus(new Error("Xiaohongshu note manager did not show a recent exact-title item")),
-    "not_found",
-  );
-  assert.equal(manualXiaohongshuVerificationFailureStatus(new Error("Xiaohongshu login timed out")), "login_required");
-
-  const shortLivedPanel = spawn(process.execPath, ["-e", "setTimeout(() => {}, 150)"], {
-    windowsHide: true,
-    stdio: "ignore",
-  });
-  assert.equal(manualPanelProcessIsRunning(shortLivedPanel.pid), true);
-  await waitForManualPanelClose(shortLivedPanel.pid, { pollMilliseconds: 20 });
-  assert.equal(manualPanelProcessIsRunning(shortLivedPanel.pid), false);
 
   const testPayload = buildXiaohongshuManualPayload({
     queuePosition: 1,
@@ -215,20 +156,8 @@ try {
   assert.doesNotMatch(launcherSource, /launchVerificationWatcher|--panel-pid/u);
   assert.match(launcherSource, /windowsHide: true/u);
 
-  const verifierSource = fs.readFileSync(verifierScript, "utf8");
-  assert.match(verifierSource, /verification_disabled/u);
-  assert.match(verifierSource, /disabled by repository policy/u);
-  assert.match(verifierSource, /waitForManualPanelClose/u);
-  assert.match(verifierSource, /verifyXiaohongshuPublishedWork/u);
-  assert.match(verifierSource, /fullPage: false/u);
-  assert.match(verifierSource, /markPublishQueuePlatformPublished/u);
-  assert.doesNotMatch(verifierSource, /platformPrepareFunction|platformPublishFunction/u);
   const platformPublishersSource = fs.readFileSync(path.resolve(scriptDir, "..", "lib", "platform-publishers.mjs"), "utf8");
-  const xiaohongshuVerifierSource = platformPublishersSource.slice(
-    platformPublishersSource.indexOf("export async function verifyXiaohongshuPublishedWork"),
-  );
-  assert.match(xiaohongshuVerifierSource, /recentThreshold = Number\.isFinite\(notBefore\) \? notBefore : null/u);
-  assert.doesNotMatch(xiaohongshuVerifierSource, /notBefore - 5 \* 60 \* 1000/u);
+  assert.doesNotMatch(platformPublishersSource, /verifyXiaohongshuPublishedWork|prepareXiaohongshu|publishXiaohongshu/u);
 } finally {
   fs.rmSync(testRoot, { recursive: true, force: true });
 }

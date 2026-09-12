@@ -35,17 +35,19 @@ const PLATFORM_FIELDS = {
     publication: "douyinPublication",
     officialHosts: ["creator.douyin.com", "www.douyin.com", "douyin.com"],
   },
-  xiaohongshu: {
-    status: "xiaohongshuStatus",
-    publication: "xiaohongshuPublication",
-    officialHosts: ["creator.xiaohongshu.com", "www.xiaohongshu.com", "xiaohongshu.com"],
-  },
 };
 
 const PLATFORM_STATUSES = {
   douyin: new Set(["pending", "published"]),
-  xiaohongshu: new Set(["pending", "published", "skipped"]),
 };
+
+export const PUBLISH_QUEUE_SCHEMA_VERSION = 2;
+const XIAOHONGSHU_OPERATIONAL_FIELDS = [
+  "xiaohongshuStatus",
+  "xiaohongshuPublication",
+  "xiaohongshuSkip",
+  "xiaohongshuPublicationRetractions",
+];
 
 export const MISTAKEN_STOCK_REPLENISHMENT_ARCHIVE_KIND = "mistaken-stock-replenishment";
 
@@ -67,12 +69,30 @@ function previousReleaseSnapshot(item, supersededAt) {
     title: item.title,
     description: item.description,
     douyinStatus: item.douyinStatus,
-    xiaohongshuStatus: item.xiaohongshuStatus,
-    ...(item.xiaohongshuSkip ? { xiaohongshuSkip: item.xiaohongshuSkip } : {}),
     ...(item.releaseManifestPath ? { releaseManifestPath: item.releaseManifestPath } : {}),
     ...(item.douyinPublication ? { douyinPublication: item.douyinPublication } : {}),
-    ...(item.xiaohongshuPublication ? { xiaohongshuPublication: item.xiaohongshuPublication } : {}),
     supersededAt,
+  };
+}
+
+function stripXiaohongshuOperationalFields(item) {
+  const next = structuredClone(item);
+  for (const field of XIAOHONGSHU_OPERATIONAL_FIELDS) delete next[field];
+  if (Array.isArray(next.previousReleases)) {
+    next.previousReleases = next.previousReleases.map((previous) => {
+      const copy = { ...previous };
+      for (const field of XIAOHONGSHU_OPERATIONAL_FIELDS) delete copy[field];
+      return copy;
+    });
+  }
+  return next;
+}
+
+export function normalizePublishQueueObject(data) {
+  return {
+    ...structuredClone(data),
+    schemaVersion: PUBLISH_QUEUE_SCHEMA_VERSION,
+    items: (data.items || []).map(stripXiaohongshuOperationalFields),
   };
 }
 
@@ -122,6 +142,10 @@ function withQueueWriteLock(root, operation) {
 
 export function validatePublishQueueObject(data, filePath = "publish-queue.json") {
   assert(data && typeof data === "object" && !Array.isArray(data), `${filePath}: root must be an object`);
+  assert(
+    data.schemaVersion === undefined || data.schemaVersion === 1 || data.schemaVersion === PUBLISH_QUEUE_SCHEMA_VERSION,
+    `${filePath}: unsupported schemaVersion ${data.schemaVersion}`,
+  );
   assert(typeof data.updatedAt === "string" && data.updatedAt.trim(), `${filePath}: updatedAt must be a non-empty string`);
   assert(Array.isArray(data.items), `${filePath}: items must be an array`);
 
@@ -141,48 +165,9 @@ export function validatePublishQueueObject(data, filePath = "publish-queue.json"
     assert(typeof item.scriptVersion === "string" && item.scriptVersion.trim(), `${filePath}: item.scriptVersion must be a non-empty string`);
     assert(/^[a-f0-9]{64}$/iu.test(String(item.renderSha256)), `${filePath}: item.renderSha256 must be a sha256 hex string`);
     assert(PLATFORM_STATUSES.douyin.has(item.douyinStatus), `${filePath}: unsupported item.douyinStatus ${item.douyinStatus}`);
-    assert(PLATFORM_STATUSES.xiaohongshu.has(item.xiaohongshuStatus), `${filePath}: unsupported item.xiaohongshuStatus ${item.xiaohongshuStatus}`);
-    if (item.xiaohongshuStatus === "skipped") {
-      assert(item.xiaohongshuSkip && typeof item.xiaohongshuSkip === "object", `${filePath}: skipped Xiaohongshu item requires xiaohongshuSkip`);
-      assert(
-        typeof item.xiaohongshuSkip.skippedAt === "string" && Number.isFinite(Date.parse(item.xiaohongshuSkip.skippedAt)),
-        `${filePath}: item.xiaohongshuSkip.skippedAt must be an ISO date`,
-      );
-      assert(
-        typeof item.xiaohongshuSkip.reason === "string" && item.xiaohongshuSkip.reason.trim(),
-        `${filePath}: item.xiaohongshuSkip.reason must be non-empty`,
-      );
-      assert(item.xiaohongshuPublication === undefined, `${filePath}: skipped Xiaohongshu item cannot have publication proof`);
-    } else {
-      assert(item.xiaohongshuSkip === undefined, `${filePath}: xiaohongshuSkip is only valid for skipped items`);
-    }
-    if (item.xiaohongshuPublicationRetractions !== undefined) {
-      assert(
-        Array.isArray(item.xiaohongshuPublicationRetractions),
-        `${filePath}: item.xiaohongshuPublicationRetractions must be an array`,
-      );
-      for (const retraction of item.xiaohongshuPublicationRetractions) {
-        assert(
-          retraction && typeof retraction === "object" && !Array.isArray(retraction),
-          `${filePath}: every Xiaohongshu publication retraction must be an object`,
-        );
-        assert(
-          typeof retraction.retractedAt === "string" && Number.isFinite(Date.parse(retraction.retractedAt)),
-          `${filePath}: Xiaohongshu publication retraction time must be an ISO date`,
-        );
-        assert(
-          typeof retraction.reason === "string" && retraction.reason.trim(),
-          `${filePath}: Xiaohongshu publication retraction reason must be non-empty`,
-        );
-        assert(retraction.releaseId === item.releaseId, `${filePath}: Xiaohongshu publication retraction releaseId mismatch`);
-        assert(
-          retraction.renderSha256 === String(item.renderSha256).toLowerCase(),
-          `${filePath}: Xiaohongshu publication retraction renderSha256 mismatch`,
-        );
-        assert(
-          retraction.publication?.platform === "xiaohongshu",
-          `${filePath}: Xiaohongshu publication retraction must preserve its publication proof`,
-        );
+    if (data.schemaVersion === PUBLISH_QUEUE_SCHEMA_VERSION) {
+      for (const field of XIAOHONGSHU_OPERATIONAL_FIELDS) {
+        assert(item[field] === undefined, `${filePath}: schema v2 forbids active item.${field}`);
       }
     }
     assert(typeof item.createdAt === "string" && item.createdAt.trim(), `${filePath}: item.createdAt must be a non-empty string`);
@@ -234,7 +219,8 @@ export function readPublishQueue(root, options = {}) {
     if (options.required) throw new Error(`Missing publication queue: ${filePath}`);
     return null;
   }
-  return validatePublishQueueObject(readJsonFile(filePath), filePath);
+  const raw = validatePublishQueueObject(readJsonFile(filePath), filePath);
+  return options.preserveLegacy ? raw : normalizePublishQueueObject(raw);
 }
 
 export function validatePublishQueueArchiveObject(data, filePath = "publish-queue.archive.json") {
@@ -412,16 +398,12 @@ function buildQueueItem(queue, result, nowText, historicalItem = null) {
     releaseId,
     releaseManifestPath: result.release.manifestPortablePath,
     douyinStatus: releaseChanged ? "pending" : (existing?.douyinStatus || "pending"),
-    xiaohongshuStatus: releaseChanged ? "pending" : (existing?.xiaohongshuStatus || "pending"),
     createdAt: existing?.createdAt || nowText,
     ...(previousReleases.length ? { previousReleases } : {}),
   };
   if (!releaseChanged) {
     const douyinPublication = bindPublicationToRelease(existing?.douyinPublication, releaseId, renderSha256);
-    const xiaohongshuPublication = bindPublicationToRelease(existing?.xiaohongshuPublication, releaseId, renderSha256);
     if (douyinPublication) item.douyinPublication = douyinPublication;
-    if (xiaohongshuPublication) item.xiaohongshuPublication = xiaohongshuPublication;
-    if (existing?.xiaohongshuSkip) item.xiaohongshuSkip = existing.xiaohongshuSkip;
   }
   return item;
 }
@@ -453,6 +435,7 @@ export function upsertCompletedEpisodeIntoPublishQueue(root, result, options = {
       : [...current.items, item];
     const next = {
       ...current,
+      schemaVersion: PUBLISH_QUEUE_SCHEMA_VERSION,
       updatedAt: nowText,
       items: compactQueuePositions(items),
     };
@@ -546,12 +529,6 @@ export function markPublishQueuePlatformPublished(root, options = {}) {
       existing.releaseId,
       expectedRenderSha256,
     );
-    const previousOtherStatuses = Object.fromEntries(
-      Object.entries(PLATFORM_FIELDS)
-        .filter(([name]) => name !== platform)
-        .map(([, value]) => [value.status, existing[value.status]]),
-    );
-
     if (existing[fields.status] === "published") {
       const persistedPublication = existing[fields.publication];
       if (persistedPublication) {
@@ -586,9 +563,6 @@ export function markPublishQueuePlatformPublished(root, options = {}) {
       persistedItem?.[fields.publication]?.url === publication.url,
       `${filePath}: ${platform} publication proof was not persisted`,
     );
-    for (const [statusField, expectedStatus] of Object.entries(previousOtherStatuses)) {
-      assert(persistedItem[statusField] === expectedStatus, `${filePath}: unrelated platform status changed`);
-    }
     return { queue: persisted, item: persistedItem, filePath, changed: true };
   });
   const ledger = syncQueueItemToProductionLedger(root, queueResult.item, {
@@ -596,131 +570,6 @@ export function markPublishQueuePlatformPublished(root, options = {}) {
     now: options.now,
   });
   return { ...queueResult, ledger };
-}
-
-export function reopenXiaohongshuFalsePositive(root, options = {}) {
-  const position = Number(options.position);
-  assert(Number.isInteger(position) && position > 0, "Xiaohongshu false-positive reopen requires a positive queue position");
-  const expectedReleaseId = String(options.expectedReleaseId || "").trim().toLowerCase();
-  assert(/^[a-f0-9]{64}$/u.test(expectedReleaseId), "Xiaohongshu false-positive reopen requires expectedReleaseId");
-  const expectedRenderSha256 = String(options.expectedRenderSha256 || "").trim().toLowerCase();
-  assert(/^[a-f0-9]{64}$/u.test(expectedRenderSha256), "Xiaohongshu false-positive reopen requires expectedRenderSha256");
-  const reason = String(options.reason || "").trim();
-  assert(reason, "Xiaohongshu false-positive reopen requires a reason");
-
-  const queueResult = withQueueWriteLock(root, () => {
-    const filePath = queuePathFor(root);
-    const current = readPublishQueue(root, { required: true });
-    const matches = current.items.filter((entry) => entry.position === position);
-    assert(matches.length === 1, `${filePath}: expected exactly one queue entry at position ${position}, found ${matches.length}`);
-    const existing = matches[0];
-    assert(existing.releaseId === expectedReleaseId, `${filePath}: refusing to reopen a different release`);
-    assert(
-      String(existing.renderSha256).toLowerCase() === expectedRenderSha256,
-      `${filePath}: refusing to reopen a different render hash`,
-    );
-    assert(existing.xiaohongshuStatus === "published", `${filePath}: Xiaohongshu status must be published before false-positive reopen`);
-    assert(existing.xiaohongshuPublication, `${filePath}: Xiaohongshu published status has no publication proof to retract`);
-
-    const reopenedAt = options.now instanceof Date
-      ? options.now.toISOString()
-      : String(options.now || new Date().toISOString());
-    assert(Number.isFinite(Date.parse(reopenedAt)), "Xiaohongshu false-positive reopen time must be an ISO date");
-    const retraction = {
-      retractedAt: reopenedAt,
-      reason,
-      releaseId: expectedReleaseId,
-      renderSha256: expectedRenderSha256,
-      publication: existing.xiaohongshuPublication,
-    };
-    const { xiaohongshuPublication: _retractedPublication, ...remaining } = existing;
-    const nextItem = {
-      ...remaining,
-      xiaohongshuStatus: "pending",
-      xiaohongshuPublicationRetractions: [
-        ...(existing.xiaohongshuPublicationRetractions || []),
-        retraction,
-      ],
-    };
-    const next = {
-      ...current,
-      updatedAt: reopenedAt,
-      items: current.items.map((entry) => (entry.position === position ? nextItem : entry)),
-    };
-    validatePublishQueueObject(next, filePath);
-    writeFileAtomically(filePath, `${JSON.stringify(next, null, 2)}\n`, { encoding: "utf8" });
-
-    const persisted = readPublishQueue(root, { required: true });
-    const persistedItem = persisted.items.find((entry) => entry.position === position);
-    assert(persistedItem?.xiaohongshuStatus === "pending", `${filePath}: Xiaohongshu pending status was not persisted`);
-    assert(persistedItem?.xiaohongshuPublication === undefined, `${filePath}: retracted Xiaohongshu proof remains active`);
-    assert(persistedItem?.douyinStatus === existing.douyinStatus, `${filePath}: Douyin status changed during Xiaohongshu reopen`);
-    return { queue: persisted, item: persistedItem, filePath, changed: true, retraction };
-  });
-  const ledger = syncQueueItemToProductionLedger(root, queueResult.item, {
-    source: "queue-xiaohongshu-retraction",
-    now: options.now,
-  });
-  return { ...queueResult, ledger };
-}
-
-export function skipPendingXiaohongshuItems(root, options = {}) {
-  const reason = String(options.reason || "").trim();
-  assert(reason, "Skipping Xiaohongshu pending items requires a reason");
-  const skippedAt = options.now instanceof Date
-    ? options.now.toISOString()
-    : String(options.now || new Date().toISOString());
-  assert(Number.isFinite(Date.parse(skippedAt)), "Xiaohongshu skip time must be an ISO date");
-
-  const queueResult = withQueueWriteLock(root, () => {
-    const filePath = queuePathFor(root);
-    const current = readPublishQueue(root, { required: true });
-    const pendingItems = current.items.filter((item) => item.xiaohongshuStatus === "pending");
-    if (!pendingItems.length) {
-      return { queue: current, filePath, changed: false, skippedCount: 0, positions: [] };
-    }
-    for (const item of pendingItems) {
-      assert(item.xiaohongshuPublication === undefined, `${filePath}: pending Xiaohongshu item cannot already have publication proof`);
-    }
-
-    const pendingPositions = new Set(pendingItems.map((item) => item.position));
-    const next = {
-      ...current,
-      updatedAt: skippedAt,
-      items: current.items.map((item) => (
-        pendingPositions.has(item.position)
-          ? {
-              ...item,
-              xiaohongshuStatus: "skipped",
-              xiaohongshuSkip: { skippedAt, reason },
-            }
-          : item
-      )),
-    };
-    validatePublishQueueObject(next, filePath);
-    writeFileAtomically(filePath, `${JSON.stringify(next, null, 2)}\n`, { encoding: "utf8" });
-
-    const persisted = readPublishQueue(root, { required: true });
-    assert(
-      persisted.items.every((item) => item.xiaohongshuStatus !== "pending"),
-      `${filePath}: Xiaohongshu pending items remain after skip update`,
-    );
-    return {
-      queue: persisted,
-      filePath,
-      changed: true,
-      skippedCount: pendingItems.length,
-      positions: pendingItems.map((item) => item.position),
-    };
-  });
-  if (!queueResult.changed) return queueResult;
-  for (const item of queueResult.queue.items.filter((entry) => queueResult.positions.includes(entry.position))) {
-    syncQueueItemToProductionLedger(root, item, {
-      source: "queue-xiaohongshu-skip",
-      now: options.now,
-    });
-  }
-  return queueResult;
 }
 
 export function archiveInactivePublishQueueItems(root, options = {}) {
@@ -737,7 +586,6 @@ export function archiveInactivePublishQueueItems(root, options = {}) {
     const current = readPublishQueue(root, { required: true });
     const inactiveItems = current.items.filter((item) => (
       !publicationStatusBlocksCompletion("douyin", item.douyinStatus)
-      && !publicationStatusBlocksCompletion("xiaohongshu", item.xiaohongshuStatus)
     ));
     if (!inactiveItems.length) {
       return { queue: current, filePath, archivePath, changed: false, archivedCount: 0, positions: [] };
@@ -761,6 +609,7 @@ export function archiveInactivePublishQueueItems(root, options = {}) {
 
     const nextQueue = {
       ...current,
+      schemaVersion: PUBLISH_QUEUE_SCHEMA_VERSION,
       updatedAt: archivedAt,
       items: current.items.filter((item) => !inactivePositions.has(item.position)),
     };
@@ -847,8 +696,42 @@ export function selectNextDouyinPublishQueueItem(root) {
     renderSha256: String(item.renderSha256).toLowerCase(),
     videoPath: item.videoPath,
     douyinStatus: item.douyinStatus,
-    xiaohongshuStatus: item.xiaohongshuStatus,
     douyinAttemptCount: history.platforms.douyin.attemptCount,
     history,
   };
+}
+
+export function migratePublishQueueToSchemaV2(root, options = {}) {
+  return withQueueWriteLock(root, () => {
+    const filePath = queuePathFor(root);
+    assert(fs.existsSync(filePath), `Missing publication queue: ${filePath}`);
+    const raw = validatePublishQueueObject(readJsonFile(filePath), filePath);
+    const migratedAt = options.now instanceof Date
+      ? options.now.toISOString()
+      : String(options.now || new Date().toISOString());
+    assert(Number.isFinite(Date.parse(migratedAt)), "Queue migration time must be an ISO date");
+    const backupDir = path.join(root, ".agents", "migrations");
+    fs.mkdirSync(backupDir, { recursive: true });
+    const backupPath = path.join(backupDir, `publish-queue-v1-${migratedAt.replace(/[:.]/gu, "-")}.json`);
+    writeFileAtomically(backupPath, `${JSON.stringify(raw, null, 2)}\n`, { encoding: "utf8" });
+    const historicalItems = raw.items.filter((item) => item.releaseId);
+    if (historicalItems.length) {
+      updateProductionLedger(root, (ledger) => {
+        for (const item of historicalItems) {
+          recordQueueReleaseSnapshot(ledger, {
+            releaseId: item.releaseId,
+            item,
+            observedAt: migratedAt,
+            source: "publish-queue-v2-migration",
+            sourcePath: path.relative(root, backupPath).replaceAll("\\", "/"),
+          });
+        }
+        return ledger;
+      }, { now: migratedAt });
+    }
+    const next = normalizePublishQueueObject({ ...raw, updatedAt: migratedAt });
+    validatePublishQueueObject(next, filePath);
+    writeFileAtomically(filePath, `${JSON.stringify(next, null, 2)}\n`, { encoding: "utf8" });
+    return { filePath, backupPath, queue: readPublishQueue(root, { required: true }), migratedAt };
+  });
 }

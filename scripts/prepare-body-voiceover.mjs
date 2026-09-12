@@ -16,23 +16,52 @@ import { resolveScriptVersion } from "./lib/script-version.mjs";
 import {
   TEMP_RETENTION_HOURS,
   createTempWorkspace,
+  readManagedTempWorkspaceMetadata,
   removeTempWorkspace,
   updateTempWorkspace,
 } from "./lib/temp-lifecycle.mjs";
 import {
   DEFAULT_TTS_OPTIONS,
+  assertVoiceoverResumeWorkspaceOwnership,
   buildBodyTtsChunks,
   buildBodyTtsUnits,
-  edgeSubtitleOutputPath,
+  callEdgeTtsWithSocketCleanup,
+  createOrResumeVoiceoverCheckpoint,
+  getVoiceoverCheckpointChunkPaths,
+  recordVoiceoverCheckpointChunk,
+  validateVoiceoverCheckpointChunk,
 } from "./lib/voiceover-preparation.mjs";
 import { resolveBriefDisplayTitle } from "./lib/brief-display-title.mjs";
+import { createTtsPacing } from "./lib/tts-pacing.mjs";
 
 const ROOT = process.cwd();
-const TTS_CHUNK_DELAY_MS = 15000;
-const TTS_RETRY_DELAY_MS = 30000;
-const [episodeName, ...cliArgs] = process.argv.slice(2);
-const requestedVersion = cliArgs[0] && !cliArgs[0].startsWith("--") ? cliArgs.shift() : undefined;
-const optionArgs = cliArgs;
+const [episodeName, ...rawCliArgs] = process.argv.slice(2);
+
+function parseCliArguments(args) {
+  const values = [...args];
+  const requestedVersion = values[0] && !values[0].startsWith("--") ? values.shift() : undefined;
+  const optionArgs = [];
+  let resumeWorkspace;
+  for (let index = 0; index < values.length; index += 1) {
+    const argument = values[index];
+    if (argument === "--resume") {
+      if (resumeWorkspace !== undefined) throw new Error("--resume may only be specified once");
+      resumeWorkspace = values[++index];
+      if (!resumeWorkspace) throw new Error("Missing value for --resume");
+      continue;
+    }
+    if (argument.startsWith("--resume=")) {
+      if (resumeWorkspace !== undefined) throw new Error("--resume may only be specified once");
+      resumeWorkspace = argument.slice("--resume=".length);
+      if (!resumeWorkspace) throw new Error("Missing value for --resume");
+      continue;
+    }
+    optionArgs.push(argument);
+  }
+  return { requestedVersion, optionArgs, resumeWorkspace };
+}
+
+const { requestedVersion, optionArgs, resumeWorkspace } = parseCliArguments(rawCliArgs);
 
 function readOptions(values) {
   const options = { ...DEFAULT_TTS_OPTIONS };
@@ -91,22 +120,8 @@ function formatConcatFilePath(filePath) {
   return `file '${normalized}'`;
 }
 
-function delay(milliseconds) {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds));
-}
-
-async function synthesizeChunk(tts, text, index) {
-  try {
-    return await tts.call(text);
-  } catch (error) {
-    console.warn(`TTS chunk ${index + 1} failed once; retrying after ${TTS_RETRY_DELAY_MS} ms: ${String(error)}`);
-    await delay(TTS_RETRY_DELAY_MS);
-    return tts.call(text);
-  }
-}
-
 if (!episodeName) {
-  console.error("Usage: node scripts/prepare-body-voiceover.mjs <episode-name> [script-version] [options]");
+  console.error("Usage: node scripts/prepare-body-voiceover.mjs <episode-name> [script-version] [--resume <managed-workspace>] [options]");
   process.exit(1);
 }
 
@@ -123,21 +138,28 @@ const scriptValidation = validateBodyScript(rows);
 if (scriptValidation.errors.length) throw new Error(scriptValidation.errors.join("；"));
 const displayTitle = resolveBriefDisplayTitle(brief, episodeName);
 const ttsUnits = buildBodyTtsUnits(displayTitle, rows);
+const chunks = buildBodyTtsChunks(ttsUnits);
+const isResume = Boolean(resumeWorkspace);
+const workspace = isResume
+  ? path.resolve(ROOT, resumeWorkspace)
+  : createTempWorkspace(ROOT, {
+    kind: "voiceover",
+    label: slugifyEpisodeName(episodeName),
+    owner: "prepare-body-voiceover.mjs",
+    retentionHours: TEMP_RETENTION_HOURS.active,
+    details: { episode: episodeName, scriptVersion },
+  });
 
-const workspace = createTempWorkspace(ROOT, {
-  kind: "voiceover",
-  label: slugifyEpisodeName(episodeName),
-  owner: "prepare-body-voiceover.mjs",
-  retentionHours: TEMP_RETENTION_HOURS.active,
-  details: { episode: episodeName, scriptVersion },
-});
+if (isResume) {
+  const metadata = readManagedTempWorkspaceMetadata(ROOT, workspace);
+  assertVoiceoverResumeWorkspaceOwnership(metadata, episodeName, scriptVersion);
+}
+
 const candidateDir = path.join(workspace, "candidate");
 const backupDir = path.join(workspace, "backup");
 const candidateAudio = path.join(candidateDir, "body-voiceover.mp3");
-const generatedSubtitles = edgeSubtitleOutputPath(candidateAudio);
 const candidateEdgeSubtitles = path.join(candidateDir, "body-voiceover.edge-timings.json");
 const candidateInput = path.join(candidateDir, "body-voiceover-input.txt");
-const chunkDir = path.join(candidateDir, "chunks");
 const concatListPath = path.join(candidateDir, "body-voiceover-concat.txt");
 const audioDir = path.join(episodeDir, "audio");
 const audioPath = path.join(audioDir, "body-voiceover.mp3");
@@ -146,10 +168,21 @@ const inputPath = path.join(audioDir, "body-voiceover-input.txt");
 const timingsPath = path.join(audioDir, "body-timings.json");
 const timingBackupPath = path.join(workspace, "previous-body-timings.json");
 const hadTimingFile = fs.existsSync(timingsPath);
+const ttsPacing = createTtsPacing();
+let voiceoverStatus = "failed";
 
 try {
   fs.mkdirSync(candidateDir, { recursive: true });
-  fs.writeFileSync(candidateInput, `${ttsUnits.join("\n")}\n`);
+  const checkpointManifest = createOrResumeVoiceoverCheckpoint({
+    workspace,
+    resume: isResume,
+    episode: episodeName,
+    scriptVersion,
+    ttsUnits,
+    ttsOptions,
+    chunks,
+  });
+  writeFileAtomically(candidateInput, `${ttsUnits.join("\n")}\n`);
   const tts = new EdgeTTS({
     voice: ttsOptions.voice,
     lang: ttsOptions.lang,
@@ -159,17 +192,54 @@ try {
     timeout: ttsOptions.timeout,
     proxy: ttsOptions.proxy || undefined,
   });
-  const chunks = buildBodyTtsChunks(ttsUnits);
   const chunkPaths = [];
   const combinedSubtitles = [];
   let elapsedMs = 0;
-  fs.mkdirSync(chunkDir, { recursive: true });
   for (const [index, chunk] of chunks.entries()) {
-    if (index > 0) await delay(TTS_CHUNK_DELAY_MS);
-    const generated = await synthesizeChunk(tts, chunk.join(" "), index);
-    const chunkPath = path.join(chunkDir, `chunk-${String(index + 1).padStart(2, "0")}.mp3`);
-    fs.writeFileSync(chunkPath, generated.data);
-    for (const item of generated.subtitles) {
+    let checkpoint = null;
+    try {
+      checkpoint = validateVoiceoverCheckpointChunk({
+        workspace,
+        manifest: checkpointManifest,
+        index,
+        expectedUnits: chunk,
+        validateBoundaries: buildEdgeSubtitleSegments,
+      });
+    } catch (checkpointError) {
+      console.warn(`TTS checkpoint chunk ${index + 1} cannot be reused; synthesizing again: ${String(checkpointError.message || checkpointError)}`);
+    }
+
+    let chunkPath;
+    let nativeSubtitles;
+    if (checkpoint) {
+      chunkPath = checkpoint.audioPath;
+      nativeSubtitles = checkpoint.boundaries;
+      ttsPacing.reuseChunk(index);
+      console.log(`Reusing verified TTS checkpoint chunk ${index + 1}: ${chunkPath}`);
+    } else {
+      const generated = await ttsPacing.synthesizeChunk(index, () => callEdgeTtsWithSocketCleanup(tts, chunk.join(" ")));
+      if (!generated?.data || Number(generated.data.length) <= 0) {
+        throw new Error(`Edge TTS returned no audio for chunk ${index + 1}`);
+      }
+      if (!Array.isArray(generated.subtitles)) {
+        throw new Error(`Edge TTS returned no native boundaries for chunk ${index + 1}`);
+      }
+      buildEdgeSubtitleSegments(generated.subtitles, chunk);
+      const checkpointPaths = getVoiceoverCheckpointChunkPaths(workspace, index);
+      writeFileAtomically(checkpointPaths.audioPath, generated.data);
+      writeFileAtomically(checkpointPaths.boundariesPath, `${JSON.stringify(generated.subtitles, null, 2)}\n`);
+      recordVoiceoverCheckpointChunk({
+        workspace,
+        manifest: checkpointManifest,
+        index,
+        expectedUnits: chunk,
+        validateBoundaries: buildEdgeSubtitleSegments,
+      });
+      chunkPath = checkpointPaths.audioPath;
+      nativeSubtitles = generated.subtitles;
+    }
+
+    for (const item of nativeSubtitles) {
       combinedSubtitles.push({
         ...item,
         start: Number(item.start) + elapsedMs,
@@ -185,10 +255,9 @@ try {
     "-f", "concat", "-safe", "0", "-i", concatListPath,
     "-c", "copy", candidateAudio,
   ]);
-  fs.writeFileSync(generatedSubtitles, `${JSON.stringify(combinedSubtitles, null, 2)}\n`);
+  writeFileAtomically(candidateEdgeSubtitles, `${JSON.stringify(combinedSubtitles, null, 2)}\n`);
   if (!fs.existsSync(candidateAudio)) throw new Error(`node-edge-tts did not create audio: ${candidateAudio}`);
-  if (!fs.existsSync(generatedSubtitles)) throw new Error(`node-edge-tts did not create subtitles: ${generatedSubtitles}`);
-  fs.renameSync(generatedSubtitles, candidateEdgeSubtitles);
+  if (!fs.existsSync(candidateEdgeSubtitles)) throw new Error(`node-edge-tts did not create subtitles: ${candidateEdgeSubtitles}`);
   const edgeItems = readJsonFile(candidateEdgeSubtitles);
   buildEdgeSubtitleSegments(edgeItems, ttsUnits);
 
@@ -215,7 +284,15 @@ try {
   }
 
   try {
-    removeTempWorkspace(ROOT, workspace);
+    if (isResume) {
+      updateTempWorkspace(ROOT, workspace, {
+        status: "completed",
+        retentionHours: TEMP_RETENTION_HOURS.preview,
+        details: { stage: "voiceover", checkpoint: "resumed-and-completed" },
+      });
+    } else {
+      removeTempWorkspace(ROOT, workspace);
+    }
   } catch (cleanupError) {
     try {
       updateTempWorkspace(ROOT, workspace, {
@@ -230,6 +307,7 @@ try {
   }
   console.log(audioPath);
   console.log(timingsPath);
+  voiceoverStatus = "succeeded";
 } catch (error) {
   try {
     updateTempWorkspace(ROOT, workspace, {
@@ -242,4 +320,6 @@ try {
     // Preserve the original voiceover error.
   }
   throw error;
+} finally {
+  ttsPacing.finish(voiceoverStatus);
 }

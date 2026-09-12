@@ -35,10 +35,7 @@ function activeEpisodeNames(root) {
   const active = new Set();
   const queue = readPublishQueue(root);
   for (const item of queue?.items || []) {
-    if (
-      publicationStatusBlocksCompletion("douyin", item.douyinStatus)
-      || publicationStatusBlocksCompletion("xiaohongshu", item.xiaohongshuStatus)
-    ) {
+    if (publicationStatusBlocksCompletion("douyin", item.douyinStatus)) {
       active.add(item.book);
     }
   }

@@ -121,6 +121,9 @@ export function validateReplenishmentBatch(data, filePath = "stock-replenishment
   assert(["active", "complete", "archived"].includes(data.status), `${filePath}: unsupported status ${data.status}`);
   assert(typeof data.startedAt === "string" && data.startedAt.trim(), `${filePath}: startedAt must be a non-empty string`);
   assert(typeof data.sampleBook === "string" && data.sampleBook.trim(), `${filePath}: sampleBook must be a non-empty string`);
+  if (data.qaRequired !== undefined) {
+    assert(typeof data.qaRequired === "boolean", `${filePath}: qaRequired must be a boolean when present`);
+  }
   assert(Array.isArray(data.items) && data.items.length > 0, `${filePath}: items must be a non-empty array`);
   assert(data.items[0]?.book === data.sampleBook, `${filePath}: the first item must be the sample book`);
   const books = new Set();
@@ -135,6 +138,15 @@ export function validateReplenishmentBatch(data, filePath = "stock-replenishment
       if (item.releaseId !== undefined) {
         assert(/^[a-f0-9]{64}$/u.test(String(item.releaseId)), `${filePath}: item.releaseId must be a sha256 hex string`);
       }
+    }
+  }
+  if (data.abandonedItems !== undefined) {
+    assert(Array.isArray(data.abandonedItems), `${filePath}: abandonedItems must be an array`);
+    for (const item of data.abandonedItems) {
+      assert(typeof item?.book === "string" && item.book.trim(), `${filePath}: abandoned item book is required`);
+      assert(typeof item?.replacedBy === "string" && item.replacedBy.trim(), `${filePath}: abandoned item replacement is required`);
+      assert(Number.isFinite(Date.parse(item.replacedAt)), `${filePath}: abandoned item replacedAt must be an ISO date`);
+      assert(typeof item.reason === "string" && item.reason.trim(), `${filePath}: abandoned item reason is required`);
     }
   }
   if (data.status === "complete") {
@@ -216,8 +228,39 @@ export function beginReplenishmentBatch(root, books, options = {}) {
       batchId: String(options.batchId || randomUUID()),
       status: "active",
       startedAt,
+      qaRequired: options.qaRequired !== false,
       sampleBook: normalizedBooks[0],
       items: normalizedBooks.map((book) => ({ book, stage: "pending" })),
+    });
+  });
+}
+
+export function replacePendingReplenishmentBook(root, currentBook, replacementBook, options = {}) {
+  return withBatchWriteLock(root, () => {
+    const batch = readReplenishmentBatch(root, { required: true });
+    assert(batch.status === "active", "Stock replenishment batch is not active");
+    const current = String(currentBook || "").trim();
+    const replacement = String(replacementBook || "").trim();
+    assert(current && replacement && current !== replacement, "Replacement requires two different non-empty books");
+    const index = batch.items.findIndex((item) => item.book === current);
+    assert(index >= 0 && batch.items[index].stage === "pending", `Only a pending replenishment item can be replaced: ${current}`);
+    assert(!batch.items.some((item) => item.book === replacement), `Replacement book is already in the batch: ${replacement}`);
+    assertBooksEligibleForStockReplenishment(root, [replacement], options);
+    const replacedAt = options.now instanceof Date
+      ? options.now.toISOString()
+      : String(options.now || new Date().toISOString());
+    const reason = String(options.reason || "qa_rework_limit").trim();
+    const items = batch.items.map((item, itemIndex) => itemIndex === index
+      ? { book: replacement, stage: "pending" }
+      : item);
+    return writeBatchState(root, {
+      ...batch,
+      sampleBook: index === 0 ? replacement : batch.sampleBook,
+      items,
+      abandonedItems: [
+        ...(batch.abandonedItems || []),
+        { book: current, replacedBy: replacement, replacedAt, reason },
+      ],
     });
   });
 }

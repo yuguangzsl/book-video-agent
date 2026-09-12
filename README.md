@@ -73,7 +73,9 @@ node scripts/init.mjs --configure-weread
 6. 如果你要求替换文案、图片或音频，Codex 会生成新方案，通过检查后覆盖旧方案。
 7. 成片通过检查后，Codex 参考至少 5 个可核验的热门同类视频，生成并保存 3 个标题候选、1 段简介和 3-5 个标签；最终通过 `stock:finalize` 或 `check:episode --delivery` 返回可点击的视频路径、选定标题和选定简介。
 
-周补货时，Codex 会先用 `npm run stock:begin -- "<样本书>" "<后续书目>"` 建立批次。该命令会阻断已有生成标题、有效成片或生产台账历史的书目，`stock:finalize` 也会再次防止绕过。第一条必须通过 `npm run stock:finalize -- "<样本书>"` 的成片、发布文案、不可变 release、哈希、原子入队、队列重读和交付闭环，后续书目才允许最终渲染；批次完成后用 `npm run stock:verify` 读取并复核可发布库存。发现误入库批次时，先运行 `npm run stock:rollback -- --dry-run` 核对精确的 release 和成片哈希，再用显式确认参数执行可恢复回滚；不得用 episode 清理代替回滚。
+自动补货和发布使用可恢复的统一入口：`npm run workflow -- replenish`、`publish-next`、`status`、`resume` 和 `verify`。运行状态原子保存在 `.agents/workflow-runs/`；Codex 每次只执行返回的一个 action envelope，完成后携带精确 action ID 恢复。action、release 或成片哈希不一致都会失败关闭。补货只统计带 `READY` 且抖音待发布的库存：每次补货都补满 7 条，达到 7 条才静默结束；生产与公开发布相互独立。候选短名单按微信读书阅读人数、评分人数、书评数和热门划线人数的分位排名加权，信号超过 7 天必须刷新，同书不同版本先按规范化书名和作者聚合。
+
+补货批次仍由 `stock:begin` 建立样本门，并逐本执行 `stock:finalize`，不能推迟到整批末尾。`stock:finalize` 前必须先生成并完成哈希绑定的 `qa.json`：`npm run qa:prepare -- "<书名>" [版本] [返工次数]` 抽取封面、片头、每个正文场景和结尾帧并检测亮度、重复画面、静音和削波；Codex 完成画面语义检查和独立 ASR 三段抽查后，运行 `npm run qa:complete -- "<书名>" "<review.json>" [版本]`。局部返工最多两次，仍失败时不得创建 release。发现误入库批次时，先运行 `npm run stock:rollback -- --dry-run` 核对精确 release 和成片哈希，再执行可恢复回滚。
 
 清理历史 episode 时先运行 `npm run cleanup:episodes -- --dry-run`；只有用户明确确认清理范围后才运行 `--apply`。删除前会先保存标准化书名，避免以后重复生产。
 
@@ -81,7 +83,7 @@ node scripts/init.mjs --configure-weread
 
 发布前，`npm run publish:brief -- --position <序号>` 只从带 `READY` 标记的不可变 release 生成发布清单。抖音继续使用专用 Chrome 工作流：`npm run publish:start -- --position <序号> ...` 预填官方发布页并停在最终发布按钮前，只有 release、文案、队列状态和成片 SHA-256 完全一致的 `publish:confirm` 才会触发发布。小红书使用人工发布：`npm run publish:xiaohongshu -- --position <序号>` 用普通浏览器打开官方发布页，并在桌面上方显示置顶面板；视频可以直接拖入上传区，标题和简介既可复制也可在用户点击后输入到刚刚聚焦的光标位置，标签会逐个输入并用键盘确认第一条平台建议，所有设置和最终话题都由用户核对并手工发布。面板不会读取网页或点击发布；关闭后不会检查作品列表、保存发布证明或更新队列发布状态。小红书不再维护独立的发布完成状态，库存、归档和日常自动化直接跟随同一 release 的抖音状态；缺少小红书凭证不再显示为“待发布”或“未发布”。
 
-本地生产历史由 `.agents/production-ledger.json` 记录：有效 render 表示“生成过”，带 `READY` 的不可变 release 表示“形成过发布包”，绑定同一 release ID 和 SHA-256 的官方凭证才表示“发布过”。首次对账运行 `npm run production:migrate`，日常验证运行 `npm run production:verify`，查看下一条安全的抖音待发布对象运行 `npm run publish:next`。活动队列只表示当前待办，序号不是历史身份。
+本地生产历史由 `.agents/production-ledger.json` 记录：有效 render 表示“生成过”，带 `READY` 的不可变 release 表示“形成过发布包”，绑定同一 release ID 和 SHA-256 的官方凭证才表示“发布过”。首次对账运行 `npm run production:migrate`，日常验证运行 `npm run production:verify`，查看下一条安全的抖音待发布对象运行 `npm run publish:next`。活动队列 schema v2 只保存抖音运营状态和可信 proof；旧 schema 可只读兼容，切换时用 `npm run inventory:migrate-v2` 在队列锁内备份并原子升级。小红书历史证据仍留在生产台账。活动队列只表示当前待办，序号不是历史身份。
 
 你也可以直接用自然语言操作，例如：
 
@@ -101,4 +103,4 @@ node scripts/init.mjs --configure-weread
 
 仓库包含四首默认 BGM，位于 `assets/bgm/`：`城南花已开.mp3`、`红色高跟鞋.mp3`、`起风了.mp3`、`如愿.mp3`。项目维护者已确认这些文件可以随本项目公开再发布；它们的来源和授权状态记录在 `templates/shared-video-template/ASSET_PROVENANCE.csv` 中。将音频用于其他商业场景时，仍需遵守对应授权范围。
 
-更详细的内部生产规则见 `AGENTS.md` 和 `docs/book-video-playbook.md`。
+更详细的内部生产规则见 `AGENTS.md` 和 `docs/book-video-playbook.md`；当前旧批次完成后的定时任务切换步骤和提示词见 `docs/automation-cutover.md`。

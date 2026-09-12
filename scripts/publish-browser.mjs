@@ -81,10 +81,6 @@ function parseAccounts(args) {
       name: String(args["douyin-account-name"] || "").trim(),
       id: String(args["douyin-account-id"] || "").trim(),
     },
-    xiaohongshu: {
-      name: String(args["xiaohongshu-account-name"] || "").trim(),
-      id: String(args["xiaohongshu-account-id"] || "").trim(),
-    },
   };
 }
 

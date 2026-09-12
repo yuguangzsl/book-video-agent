@@ -78,10 +78,10 @@ function main() {
     book: args.book,
   });
   const testMode = args.test === true;
-  const expectedStatus = testMode ? "published" : "pending";
+  const expectedStatus = "published";
   assert(
-    brief.queueStatus.xiaohongshu === expectedStatus,
-    `xiaohongshu must be ${expectedStatus} for queue item ${brief.queuePosition}${testMode ? " in test mode" : ""}`,
+    brief.queueStatus.douyin === expectedStatus,
+    `douyin must be ${expectedStatus} before Xiaohongshu handoff for queue item ${brief.queuePosition}`,
   );
   const payload = buildXiaohongshuManualPayload(brief, { testMode });
   fs.mkdirSync(MANUAL_PUBLISHER_ROOT, { recursive: true });

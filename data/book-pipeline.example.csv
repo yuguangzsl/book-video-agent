@@ -1,4 +1,4 @@
-status,priority,display_title,source_title,author,source_channel,source_book_id,category,rating,rating_count,reading_count,highlight_top_count,reviews_count,resonance_score,emotion_theme,selection_reason,video_project,notes
+status,priority,display_title,source_title,author,source_channel,source_book_id,category,rating,rating_count,reading_count,highlight_top_count,reviews_count,signals_updated_at,heat_score,heat_score_version,resonance_score,emotion_theme,selection_reason,video_project,notes
 candidate,normal,我与地坛,我与地坛,史铁生,starter_example,,文学,,,,,,high,亲情;命运;成长,具体生活场景强，适合情绪共鸣类叙事,,
 candidate,normal,活着,活着,余华,starter_example,,文学,,,,,,high,亲情;苦难;生命,情绪辨识度高，适合平铺直叙的故事文案,,
 candidate,normal,百年孤独,百年孤独,加西亚·马尔克斯,starter_example,,文学,,,,,,medium,家族;孤独;时间,意象丰富，适合氛围感画面和文学向表达,,

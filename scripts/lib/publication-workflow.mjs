@@ -13,7 +13,7 @@ import {
 } from "./production-ledger.mjs";
 import { readReleasePackage } from "./release-package.mjs";
 
-export const PUBLISH_PLATFORMS = ["douyin", "xiaohongshu"];
+export const PUBLISH_PLATFORMS = ["douyin"];
 export const TERMINAL_PUBLISH_STATUSES = new Set([
   "published",
   "published_unrecorded",
@@ -180,7 +180,6 @@ export function buildPublicationBrief(root, options = {}) {
     },
     queueStatus: {
       douyin: queueItem.douyinStatus,
-      xiaohongshu: queueItem.xiaohongshuStatus,
     },
   };
 }

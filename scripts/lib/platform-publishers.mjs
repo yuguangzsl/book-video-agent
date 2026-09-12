@@ -5,11 +5,6 @@ const PLATFORM_CONFIG = {
     prepareUrl: "https://creator.douyin.com/creator-micro/content/upload",
     manageUrl: "https://creator.douyin.com/creator-micro/content/manage",
   },
-  xiaohongshu: {
-    host: "creator.xiaohongshu.com",
-    prepareUrl: "https://creator.xiaohongshu.com/publish/publish?from=homepage&target=video",
-    manageUrl: "https://creator.xiaohongshu.com/new/note-manager",
-  },
 };
 
 function assert(condition, message) {
@@ -283,13 +278,6 @@ function descriptionEditorSelectors(platform) {
       '[contenteditable="true"][data-placeholder*="描述"]',
     ];
   }
-  if (platform === "xiaohongshu") {
-    return [
-      '[contenteditable="true"][data-placeholder*="正文"]',
-      '[contenteditable="true"]',
-      'p[data-placeholder*="输入正文描述"]',
-    ];
-  }
   throw new Error(`Unsupported publication platform: ${platform}`);
 }
 
@@ -312,13 +300,6 @@ function topicCandidateSelectors(platform) {
     return [
       ".semi-popover-content [role='option']",
       ".semi-popover-content .semi-list-item",
-      ...shared,
-    ];
-  }
-  if (platform === "xiaohongshu") {
-    return [
-      ".d-popover [role='option']",
-      ".d-popover [class*='item']",
       ...shared,
     ];
   }
@@ -367,62 +348,10 @@ async function findTopicCandidate(page, platform, topic, timeout = 10000) {
   return null;
 }
 
-async function findXiaohongshuTopicButton(page, timeout = 10000) {
-  const deadline = Date.now() + timeout;
-  do {
-    const candidates = page.getByText("话题", { exact: true });
-    const count = Math.min(await candidates.count(), 20);
-    for (let index = 0; index < count; index += 1) {
-      const candidate = candidates.nth(index);
-      if (!await candidate.isVisible().catch(() => false)) continue;
-      if (!await topicCandidateOutsideEditor(candidate)) continue;
-      return candidate;
-    }
-    await delay(250);
-  } while (Date.now() < deadline);
-  return null;
-}
-
 async function enterTopicQuery(page, editor, platform, topic) {
   await editor.press("End");
-  if (platform === "douyin") {
-    await editor.pressSequentially(`#${topic}`, { delay: 40 });
-    return;
-  }
-
-  const topicButton = await findXiaohongshuTopicButton(page);
-  assert(topicButton, "Xiaohongshu topic picker button was not found");
-  await topicButton.click();
-  await delay(250);
-
-  const search = await firstVisible(page, [
-    'input[placeholder*="搜索话题"]',
-    'input[placeholder*="输入话题"]',
-    'input[placeholder*="话题名称"]',
-    '[role="dialog"] input',
-    '[class*="topic"] input',
-  ], 1500);
-  if (search) {
-    await search.fill(topic);
-    return;
-  }
-
-  const focused = page.locator(":focus");
-  if (await focused.count() === 1 && await focused.isVisible().catch(() => false)) {
-    const acceptsText = await focused.evaluate((element) => (
-      element.matches("input, textarea, [contenteditable='true']")
-    )).catch(() => false);
-    if (acceptsText) {
-      await focused.pressSequentially(topic, { delay: 40 });
-      return;
-    }
-  }
-
-  const currentEditor = await currentDescriptionEditor(page, platform);
-  await currentEditor.press("End");
-  const description = await currentEditor.innerText();
-  if (!description.endsWith("#")) await currentEditor.pressSequentially("#", { delay: 40 });
-  await currentEditor.pressSequentially(topic, { delay: 40 });
+  assert(platform === "douyin", `Unsupported publication platform: ${platform}`);
+  await editor.pressSequentially(`#${topic}`, { delay: 40 });
 }
 
 async function fillDescriptionAndSelectTopics(page, editor, brief, platform) {
@@ -485,49 +414,6 @@ async function assertPublishButtonReady(locator, platform, timeout = 30000) {
   throw new Error(`${platform} publish button is disabled after waiting ${timeout}ms`);
 }
 
-async function waitForXiaohongshuCoverUpload(page, timeout = 10 * 60 * 1000) {
-  const deadline = Date.now() + timeout;
-  do {
-    const text = await bodyText(page);
-    assert(!/封面上传失败/u.test(text), "Xiaohongshu reported cover upload failure");
-    if (!text.includes("封面上传中")) return;
-    await delay(1000);
-  } while (Date.now() < deadline);
-  throw new Error("Xiaohongshu cover upload timed out");
-}
-
-async function currentXiaohongshuPublishControl(page, timeout = 30000) {
-  return firstVisible(page, [
-    'xhs-publish-btn[submit-text="发布"][submit-disabled="false"]',
-    'xhs-publish-btn[submit-text="发布"]',
-  ], timeout);
-}
-
-export function xiaohongshuPublishClickPosition(width, height) {
-  assert(Number.isFinite(width) && width > 0, "Xiaohongshu publish control width must be positive");
-  assert(Number.isFinite(height) && height > 0, "Xiaohongshu publish control height must be positive");
-  return {
-    x: width * 0.61,
-    y: height / 2,
-  };
-}
-
-export function xiaohongshuListTimestamp(text) {
-  const match = String(text || "").match(
-    /\b(20\d{2})-(\d{2})-(\d{2})\s+([01]\d|2[0-3]):([0-5]\d)\b/u,
-  );
-  if (!match) return null;
-  const [, year, month, day, hour, minute] = match;
-  const timestamp = new Date(
-    Number(year),
-    Number(month) - 1,
-    Number(day),
-    Number(hour),
-    Number(minute),
-  ).getTime();
-  return Number.isFinite(timestamp) ? timestamp : null;
-}
-
 export function douyinListTimestamp(text) {
   const match = String(text || "").match(
     /\b(20\d{2})年(\d{2})月(\d{2})日\s+([01]\d|2[0-3]):([0-5]\d)\b/u,
@@ -542,14 +428,6 @@ export function douyinListTimestamp(text) {
     Number(minute),
   ).getTime();
   return Number.isFinite(timestamp) ? timestamp : null;
-}
-
-async function clickXiaohongshuPublish(control) {
-  const box = await control.boundingBox();
-  assert(box, "Xiaohongshu publish control has no clickable bounds");
-  await control.click({
-    position: xiaohongshuPublishClickPosition(box.width, box.height),
-  });
 }
 
 async function selectDouyinAiDeclaration(page) {
@@ -580,43 +458,8 @@ async function selectDouyinAiDeclaration(page) {
   return { selected: true, text: selectedText };
 }
 
-async function selectXiaohongshuAiDeclaration(page) {
-  const direct = await setBooleanSetting(page, /AI.*(?:生成|创作)|(?:生成|创作).*AI|人工智能.*(?:生成|创作)/iu, true);
-  if (direct.available && direct.state === true) return { selected: true, method: "toggle" };
-
-  const declarationEntry = page.getByText(/添加内容类型声明|内容声明|创作声明|笔记声明/u, { exact: true }).first();
-  if (await declarationEntry.count() && await declarationEntry.isVisible().catch(() => false)) {
-    await declarationEntry.click();
-    await delay(500);
-    const aiOption = page.getByText(
-      /笔记含AI合成内容|AI.*(?:合成|生成|创作)|(?:合成|生成|创作).*AI|人工智能.*(?:合成|生成|创作)/iu,
-      { exact: true },
-    ).first();
-    if (await aiOption.count() && await aiOption.isVisible().catch(() => false)) {
-      await aiOption.click();
-      await delay(300);
-      const currentText = await bodyText(page);
-      assert(currentText.includes("笔记含AI合成内容"), "Xiaohongshu AI declaration selection was not retained");
-      return { selected: true, method: "content-type-declaration", text: "笔记含AI合成内容" };
-    }
-    const match = await findSettingControl(page, /AI.*(?:生成|创作)|(?:生成|创作).*AI|人工智能.*(?:生成|创作)/iu);
-    if (match) {
-      const state = await controlState(match.control);
-      if (state !== true) await match.control.click({ force: true });
-      const confirm = page.getByRole("button", { name: /确定|确认/u }).last();
-      if (await confirm.count() && await confirm.isVisible().catch(() => false)) await confirm.click();
-      return { selected: true, method: "declaration-dialog" };
-    }
-  }
-  throw new Error("Xiaohongshu AI-generated-content declaration option was not found");
-}
-
 export async function platformNeedsLogin(page, platform) {
   const url = page.url();
-  if (platform === "xiaohongshu") {
-    if (/\/login(?:[/?#]|$)/u.test(url)) return true;
-    return isVisible(page.locator("div[class*='login-box']").first());
-  }
   if (platform === "douyin") {
     if (!url.includes("/creator-micro/")) return true;
     return (
@@ -646,69 +489,6 @@ export async function waitForPlatformLogin(page, platform, options = {}) {
     await delay(2000);
   }
   throw new Error(`${platform} login timed out`);
-}
-
-async function prepareXiaohongshu(page, brief, account) {
-  const copy = platformCopyFor(brief, "xiaohongshu");
-  assertOfficialUrl("xiaohongshu", page.url());
-  const accountSignal = await requireAccount(page, account, "xiaohongshu");
-  const upload = await firstAttached(page, [
-    'input.upload-input[type="file"]',
-    'div[class^="upload-content"] input[class="upload-input"]',
-    'input[type="file"][accept*="video"]',
-  ], 60000);
-  assert(upload, "Xiaohongshu video upload input was not found");
-  await upload.setInputFiles(brief.videoPath);
-
-  const title = await firstVisible(page, ['input[placeholder*="填写标题"]'], 180000);
-  assert(title, "Xiaohongshu title input did not appear after upload");
-  await title.fill(copy.title);
-  const editor = await currentDescriptionEditor(page, "xiaohongshu");
-  const topics = await fillDescriptionAndSelectTopics(page, editor, brief, "xiaohongshu");
-
-  const uploadDeadline = Date.now() + 10 * 60 * 1000;
-  while (Date.now() < uploadDeadline) {
-    const text = await bodyText(page);
-    if (/上传成功|重新上传|编辑封面|已上传|100%/u.test(text)) break;
-    assert(!/上传失败/u.test(text), "Xiaohongshu reported video upload failure");
-    await delay(2000);
-  }
-  assert(Date.now() < uploadDeadline, "Xiaohongshu video upload timed out");
-
-  const aiDeclaration = await selectXiaohongshuAiDeclaration(page);
-  const detectedOriginalDeclaration = await setBooleanSetting(page, /原创声明|原创保护/u, false);
-  const originalDeclaration = detectedOriginalDeclaration.state === "unknown"
-    ? {
-      ...detectedOriginalDeclaration,
-      state: false,
-      observedState: "unknown",
-      source: "user-confirmed-platform-default",
-    }
-    : detectedOriginalDeclaration;
-  const download = await setBooleanSetting(page, /允许下载|允许他人下载/u, false);
-  const commercial = await setBooleanSetting(page, /商业推广|商业合作/u, false);
-  await waitForXiaohongshuCoverUpload(page);
-  const publishButton = await currentXiaohongshuPublishControl(page);
-  await assertPublishButtonReady(publishButton, "xiaohongshu");
-
-  const currentTitle = await firstVisible(page, ['input[placeholder*="填写标题"]'], 30000);
-  const currentEditor = await currentDescriptionEditor(page, "xiaohongshu");
-  assert(currentTitle && currentEditor, "Xiaohongshu form fields were not available for final verification");
-  const titleValue = await currentTitle.inputValue();
-  const descriptionValue = await currentEditor.innerText();
-  assert(titleValue === copy.title, "Xiaohongshu title verification failed");
-  assert(descriptionValue.includes(copy.description), "Xiaohongshu description verification failed");
-  for (const tag of topics.selected) {
-    assert(descriptionContainsTopicName(descriptionValue, tag), `Xiaohongshu is missing selected topic ${tag}`);
-  }
-  return {
-    accountSignal,
-    title: titleValue,
-    description: descriptionValue,
-    fileName: brief.videoPath.split(/[\\/]/u).at(-1),
-    topics,
-    settings: { aiDeclaration, originalDeclaration, download, commercial },
-  };
 }
 
 export async function prepareDouyin(page, brief, account) {
@@ -809,22 +589,6 @@ function extractWorkId(url) {
   return pathId || "";
 }
 
-async function publishXiaohongshu(page, brief) {
-  assertOfficialUrl("xiaohongshu", page.url());
-  await waitForXiaohongshuCoverUpload(page);
-  const button = await currentXiaohongshuPublishControl(page, 10000);
-  await assertPublishButtonReady(button, "xiaohongshu");
-  await clickXiaohongshuPublish(button);
-  await page.waitForURL("**/publish/success**", { timeout: 120000 });
-  const successUrl = page.url();
-  assertOfficialUrl("xiaohongshu", successUrl);
-  return {
-    successUrl,
-    acceptedSignal: "official publish success page",
-    ...(extractWorkId(successUrl) ? { workId: extractWorkId(successUrl) } : {}),
-  };
-}
-
 export async function publishDouyin(page, brief) {
   assertOfficialUrl("douyin", page.url());
   const button = page.getByRole("button", { name: "发布", exact: true }).first();
@@ -906,95 +670,12 @@ export async function verifyDouyinPublishedWork(page, brief, account = null, opt
   };
 }
 
-export async function verifyXiaohongshuPublishedWork(page, brief, account = null, options = {}) {
-  const copy = platformCopyFor(brief, "xiaohongshu");
-  if (!page.url().includes("/new/note-manager")) {
-    await page.goto(PLATFORM_CONFIG.xiaohongshu.manageUrl, {
-      waitUntil: "domcontentloaded",
-      timeout: 90000,
-    });
-    await delay(1500);
-  }
-  assertOfficialUrl("xiaohongshu", page.url());
-  if (account) await requireAccount(page, account, "xiaohongshu");
-
-  const allTabs = page.getByText(/^全部(?:\s*\d+)?$/u);
-  const allTabCount = Math.min(await allTabs.count(), 20);
-  for (let index = 0; index < allTabCount; index += 1) {
-    const candidate = allTabs.nth(index);
-    if (!await candidate.isVisible().catch(() => false)) continue;
-    await candidate.click();
-    await delay(500);
-    break;
-  }
-
-  const search = await firstVisible(page, [
-    'input[placeholder*="搜索笔记"]',
-    'input[placeholder*="搜索"]',
-  ], 5000);
-  if (search) {
-    await search.fill(copy.title);
-    await search.press("Enter");
-    await delay(1000);
-  }
-
-  const notBefore = options.notBefore ? Date.parse(options.notBefore) : Number.NaN;
-  assert(!options.notBefore || Number.isFinite(notBefore), "Xiaohongshu verification notBefore must be an ISO date");
-  const recentThreshold = Number.isFinite(notBefore) ? notBefore : null;
-  const listDeadline = Date.now() + 60000;
-  let exactTitle = null;
-  let itemText = "";
-  while (Date.now() < listDeadline) {
-    const candidates = page.getByText(copy.title, { exact: true });
-    const count = Math.min(await candidates.count(), 20);
-    for (let index = 0; index < count; index += 1) {
-      const candidate = candidates.nth(index);
-      if (!await candidate.isVisible().catch(() => false)) continue;
-      let candidateText = "";
-      for (let depth = 1; depth <= 8; depth += 1) {
-        const item = candidate.locator(`xpath=ancestor::*[self::div or self::li][${depth}]`);
-        if (!await item.count()) continue;
-        const text = String(await item.innerText().catch(() => "")).trim();
-        if (!text.includes(copy.title) || text.length > 2000) continue;
-        candidateText = text;
-        if (xiaohongshuListTimestamp(text) !== null) break;
-      }
-      const timestamp = xiaohongshuListTimestamp(candidateText);
-      if (recentThreshold !== null && (timestamp === null || timestamp < recentThreshold)) continue;
-      exactTitle = candidate;
-      itemText = candidateText;
-      break;
-    }
-    if (exactTitle) break;
-    await delay(1000);
-  }
-  assert(
-    exactTitle,
-    recentThreshold === null
-      ? `Xiaohongshu note manager did not show exact title: ${copy.title}`
-      : `Xiaohongshu note manager did not show a recent exact-title item: ${copy.title}`,
-  );
-  const listedTimestamp = xiaohongshuListTimestamp(itemText);
-  return {
-    url: page.url(),
-    signal: "official note manager contains exact title",
-    statusSignal: itemText.match(/已发布|审核中|审核|发布成功/u)?.[0] || "listed",
-    ...(listedTimestamp !== null ? { listedAt: new Date(listedTimestamp).toISOString() } : {}),
-  };
-}
-
 export function platformPrepareFunction(platform) {
   if (platform === "douyin") return prepareDouyin;
-  if (platform === "xiaohongshu") {
-    throw new Error("Xiaohongshu browser preparation is disabled; use the manual publication panel");
-  }
   throw new Error(`Unsupported publication platform: ${platform}`);
 }
 
 export function platformPublishFunction(platform) {
   if (platform === "douyin") return publishDouyin;
-  if (platform === "xiaohongshu") {
-    throw new Error("Xiaohongshu browser publication is disabled; publish manually");
-  }
   throw new Error(`Unsupported publication platform: ${platform}`);
 }
