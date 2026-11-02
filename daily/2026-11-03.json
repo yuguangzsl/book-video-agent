@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "kind": "dot-publication-task",
-  "taskId": "69df4e55f57d97b9e026d6006d9d87f11b291a592a584e16278fc19c1e0090e6",
-  "platform": "douyin",
+  "taskId": "913ca748de2d7a56467d873668da1fa8b86fde0e455f831951971c0b449676d8",
+  "platform": "multi-platform",
   "mode": "publish",
   "testOnly": false,
   "status": "ready",
@@ -34,34 +34,10 @@
     "durationSeconds": 59.2,
     "verifyDownloadedHashBeforeUpload": true
   },
-  "copy": {
-    "title": "别让没发生的事耗尽今晚",
-    "description": "一条迟迟没回复的消息，也能让人把最坏结局演一遍。《末日从噩梦开始》借噩梦闯进现实的设定提醒我们：害怕时先分清眼前真正发生了什么，别让尚未到来的未知，提前耗尽今晚。",
-    "hashtags": [
-      "#末日从噩梦开始",
-      "#暗黑茄子",
-      "#读书",
-      "#情绪共鸣",
-      "#生活感悟"
-    ]
-  },
-  "settings": {
-    "cover": "first-frame",
-    "visibility": "public",
-    "timing": "immediate",
-    "allowDownload": false,
-    "aiGenerated": true,
-    "commercialPromotion": false,
-    "originalDeclaration": false,
-    "monetization": false,
-    "location": ""
-  },
   "execution": {
     "method": "dot-computer-use",
-    "officialUploadUrl": "https://creator.douyin.com/creator-micro/content/upload",
-    "officialWorkListUrl": "https://creator.douyin.com/creator-micro/content/manage",
     "maxPublicationsPerDay": 1,
-    "dailyLimitScope": "account-and-Asia/Shanghai-calendar-date",
+    "dailyLimitScope": "platform-and-account-and-Asia/Shanghai-calendar-date",
     "requireCurrentManifestMatchBeforeSubmit": true,
     "requireScheduleWindowBeforeSubmit": true,
     "requireOfficialListAndPersistentReceiptCheckBeforeUpload": true,
@@ -78,31 +54,145 @@
     "onUncertainSubmission": "Stop. Inspect the official work list and save evidence. Never re-upload or click publish again while the outcome is uncertain.",
     "onExistingExactTitle": "Do not publish again. Collect official-list evidence and report the existing work for reconciliation.",
     "retryRequiresAuthoritativeAbsenceAndNewAuthorization": true,
-    "testPackagesAreNeverAuthorization": true
+    "testPackagesAreNeverAuthorization": true,
+    "platformsHaveIndependentReceipts": true,
+    "completionRequiresAllPlatforms": true,
+    "doNotRepeatSuccessfulPlatform": true
   },
-  "evidence": {
-    "requiredForPublished": [
-      "taskId",
-      "releaseId",
-      "renderSha256",
-      "accountId",
-      "exactTitle",
-      "officialWorkListUrl",
-      "workIdOrUrl",
-      "submittedState",
-      "verifiedAt",
-      "viewportScreenshot"
-    ],
-    "acceptedSubmittedStates": [
-      "published",
-      "under_review"
-    ],
-    "screenshot": {
-      "fullPage": false,
-      "matchedWorkMustBeVisible": true
+  "platformOrder": [
+    "douyin",
+    "xiaohongshu"
+  ],
+  "platforms": {
+    "douyin": {
+      "platformTaskId": "69df4e55f57d97b9e026d6006d9d87f11b291a592a584e16278fc19c1e0090e6",
+      "platform": "douyin",
+      "mode": "publish",
+      "testOnly": false,
+      "status": "ready",
+      "submitAuthorized": true,
+      "copy": {
+        "title": "别让没发生的事耗尽今晚",
+        "description": "一条迟迟没回复的消息，也能让人把最坏结局演一遍。《末日从噩梦开始》借噩梦闯进现实的设定提醒我们：害怕时先分清眼前真正发生了什么，别让尚未到来的未知，提前耗尽今晚。",
+        "hashtags": [
+          "#末日从噩梦开始",
+          "#暗黑茄子",
+          "#读书",
+          "#情绪共鸣",
+          "#生活感悟"
+        ]
+      },
+      "settings": {
+        "cover": "first-frame",
+        "visibility": "public",
+        "timing": "immediate",
+        "allowDownload": false,
+        "aiGenerated": true,
+        "commercialPromotion": false,
+        "originalDeclaration": false,
+        "monetization": false
+      },
+      "execution": {
+        "method": "dot-computer-use",
+        "officialCreatorUrl": "https://creator.douyin.com/",
+        "selectMatchingOfficialTopics": true,
+        "originalDeclarationMustBeOff": true,
+        "finalPublishClicks": 1,
+        "onUncertainSubmission": "Stop this platform. Inspect official work/note management before retry. Never re-upload while uncertain.",
+        "onUnsupportedSetting": "Stop this platform and report. Never invent settings or declarations."
+      },
+      "evidence": {
+        "requiredForPublished": [
+          "platform",
+          "platformTaskId",
+          "taskId",
+          "releaseId",
+          "renderSha256",
+          "accountId",
+          "exactTitle",
+          "officialWorkListUrl",
+          "workIdOrUrl",
+          "submittedState",
+          "verifiedAt",
+          "viewportScreenshot"
+        ],
+        "acceptedSubmittedStates": [
+          "published",
+          "under_review"
+        ],
+        "screenshot": {
+          "fullPage": false,
+          "matchedWorkMustBeVisible": true
+        },
+        "mustReturnEvidenceToUser": true,
+        "chatClaimOrUploadCompletionIsNotProof": true,
+        "missingEvidenceOutcome": "unverified"
+      }
     },
-    "mustReturnEvidenceToUser": true,
-    "chatClaimOrUploadCompletionIsNotProof": true,
-    "missingEvidenceOutcome": "unverified"
+    "xiaohongshu": {
+      "platformTaskId": "6242c47ac14337218eb3c1993ea30b8f43252f0eedc86cec4849fdd9b5960684",
+      "platform": "xiaohongshu",
+      "mode": "publish",
+      "testOnly": false,
+      "status": "ready",
+      "submitAuthorized": true,
+      "copy": {
+        "title": "别让没发生的事耗尽今晚",
+        "description": "一条迟迟没回复的消息，也能让人把最坏结局演一遍。《末日从噩梦开始》借噩梦闯进现实的设定提醒我们：害怕时先分清眼前真正发生了什么，别让尚未到来的未知，提前耗尽今晚。",
+        "hashtags": [
+          "#末日从噩梦开始",
+          "#暗黑茄子",
+          "#读书",
+          "#情绪共鸣",
+          "#生活感悟"
+        ]
+      },
+      "settings": {
+        "cover": "first-frame",
+        "visibility": "public",
+        "timing": "immediate",
+        "allowDownload": false,
+        "aiGenerated": true,
+        "commercialPromotion": false,
+        "originalDeclaration": false,
+        "monetization": false
+      },
+      "execution": {
+        "method": "dot-computer-use",
+        "officialCreatorUrl": "https://creator.xiaohongshu.com/",
+        "selectMatchingOfficialTopics": true,
+        "originalDeclarationMustBeOff": true,
+        "finalPublishClicks": 1,
+        "onUncertainSubmission": "Stop this platform. Inspect official work/note management before retry. Never re-upload while uncertain.",
+        "onUnsupportedSetting": "Stop this platform and report. Never invent settings or declarations."
+      },
+      "evidence": {
+        "requiredForPublished": [
+          "platform",
+          "platformTaskId",
+          "taskId",
+          "releaseId",
+          "renderSha256",
+          "accountId",
+          "exactTitle",
+          "officialWorkListUrl",
+          "workIdOrUrl",
+          "submittedState",
+          "verifiedAt",
+          "viewportScreenshot"
+        ],
+        "acceptedSubmittedStates": [
+          "published",
+          "under_review"
+        ],
+        "screenshot": {
+          "fullPage": false,
+          "matchedWorkMustBeVisible": true
+        },
+        "mustReturnEvidenceToUser": true,
+        "chatClaimOrUploadCompletionIsNotProof": true,
+        "missingEvidenceOutcome": "unverified"
+      }
+    }
   }
 }

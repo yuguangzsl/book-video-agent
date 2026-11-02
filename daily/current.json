@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "kind": "dot-publication-calendar",
   "mode": "publish",
   "testOnly": false,
@@ -14,30 +14,73 @@
   "entries": {
     "2026-11-03": {
       "taskFile": "daily/2026-11-03.json",
-      "taskSha256": "4d0839efa224a1832c39a99d1dda1016c297a35f4145d9112e2a991ca9434854",
-      "taskId": "69df4e55f57d97b9e026d6006d9d87f11b291a592a584e16278fc19c1e0090e6",
+      "taskSha256": "d894c20b90fe6abf66043899bde3899804a28e0f8df21d1787cb49b1359debda",
+      "taskId": "913ca748de2d7a56467d873668da1fa8b86fde0e455f831951971c0b449676d8",
       "releaseId": "586e4fa221444d64935e6c6022ff9522c16017f6a3fc5c48b02bc5075e27de2b",
       "renderSha256": "3cf19722ab54a7e577baa8ff970baa3fd2a7fb0eb10a2c2851cc505505180e00",
       "status": "ready",
-      "submitAuthorized": true
+      "submitAuthorized": true,
+      "platforms": {
+        "douyin": {
+          "platformTaskId": "69df4e55f57d97b9e026d6006d9d87f11b291a592a584e16278fc19c1e0090e6",
+          "status": "ready",
+          "submitAuthorized": true
+        },
+        "xiaohongshu": {
+          "platformTaskId": "6242c47ac14337218eb3c1993ea30b8f43252f0eedc86cec4849fdd9b5960684",
+          "status": "ready",
+          "submitAuthorized": true
+        }
+      }
     },
     "2026-11-04": {
       "taskFile": "daily/2026-11-04.json",
-      "taskSha256": "430333a4fa1f4a2569b077758a83a1aa1fa9f8d53b33412a9e938fd497d88cc0",
-      "taskId": "2c558dc3c48a2504febaaf20d2b335490842a951731e22353d9e7ec417aaa5ea",
+      "taskSha256": "6c5e33e695964da5bb60c9de591fcdb657bba3134e06584d966b092ff8038942",
+      "taskId": "5faf6b247b278654ce3424a17c577582aa3ed54cf3659737e394ac0be385c5d7",
       "releaseId": "57d4365ef855e53221429dad68eab9dbf1567908fd1177ce846cf3c786e25208",
       "renderSha256": "9b183e1b4ffafb08c2e1c121f255dc92c63b5be234b43b406b5154f27cebea2e",
       "status": "ready",
-      "submitAuthorized": true
+      "submitAuthorized": true,
+      "platforms": {
+        "douyin": {
+          "platformTaskId": "2c558dc3c48a2504febaaf20d2b335490842a951731e22353d9e7ec417aaa5ea",
+          "status": "ready",
+          "submitAuthorized": true
+        },
+        "xiaohongshu": {
+          "platformTaskId": "8d4a599a06dc8161d3c8695fbd81b16bb1eb6dfb042975bee545268d1dcd0f4f",
+          "status": "ready",
+          "submitAuthorized": true
+        }
+      }
     },
     "2026-11-05": {
       "taskFile": "daily/2026-11-05.json",
-      "taskSha256": "d4a203303009504bf94becaa5ff7b397bb41f904c054446fce6005dd31ee5f0e",
-      "taskId": "b5dc24749d766fe5b8d3a6ef15edb0048a56e4931cd565e539ce739dfe2ea934",
+      "taskSha256": "7f93101575dc8f326d80015b452c5ec92acc82e9aae4a47363226d2a22ca5368",
+      "taskId": "7c2441b000b6c84709c3fbf86915a723256f6797c1c0dcaa3bd4fddaa76b565e",
       "releaseId": "467fffaadb57cd70e6f4b9b3281cf51794971446b2bf905f5f74da543b4081fd",
       "renderSha256": "0d323291c6f3c22a54b23f27147b301e2b862caffa38dddac092d2a822eca77c",
       "status": "ready",
-      "submitAuthorized": true
+      "submitAuthorized": true,
+      "platforms": {
+        "douyin": {
+          "platformTaskId": "b5dc24749d766fe5b8d3a6ef15edb0048a56e4931cd565e539ce739dfe2ea934",
+          "status": "ready",
+          "submitAuthorized": true
+        },
+        "xiaohongshu": {
+          "platformTaskId": "f3c142de55cab7b67e50cf57722cdce2252f6c056353cf4cf3891568e5cb57fd",
+          "status": "ready",
+          "submitAuthorized": true
+        }
+      }
     }
-  }
+  },
+  "platforms": [
+    "douyin",
+    "xiaohongshu"
+  ],
+  "maxPublicationsPerDayPerPlatform": 1,
+  "platformCompletionPolicy": "independent-receipts; all-platforms-required; never-repeat-success",
+  "instructionFile": "daily/README.md"
 }

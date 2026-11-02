@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "kind": "dot-publication-task",
-  "taskId": "b5dc24749d766fe5b8d3a6ef15edb0048a56e4931cd565e539ce739dfe2ea934",
-  "platform": "douyin",
+  "taskId": "7c2441b000b6c84709c3fbf86915a723256f6797c1c0dcaa3bd4fddaa76b565e",
+  "platform": "multi-platform",
   "mode": "publish",
   "testOnly": false,
   "status": "ready",
@@ -34,34 +34,10 @@
     "durationSeconds": 53.67,
     "verifyDownloadedHashBeforeUpload": true
   },
-  "copy": {
-    "title": "当所有人都说你记错了",
-    "description": "明明记得不是那样，却被所有人说成记错了，久了连自己也会动摇。《1984》把这种窒息推到极处，也提醒我们：在众声喧哗时，仍要承认自己看见过什么、感受过什么。",
-    "hashtags": [
-      "#1984",
-      "#乔治奥威尔",
-      "#读书",
-      "#经典文学",
-      "#独立思考"
-    ]
-  },
-  "settings": {
-    "cover": "first-frame",
-    "visibility": "public",
-    "timing": "immediate",
-    "allowDownload": false,
-    "aiGenerated": true,
-    "commercialPromotion": false,
-    "originalDeclaration": false,
-    "monetization": false,
-    "location": ""
-  },
   "execution": {
     "method": "dot-computer-use",
-    "officialUploadUrl": "https://creator.douyin.com/creator-micro/content/upload",
-    "officialWorkListUrl": "https://creator.douyin.com/creator-micro/content/manage",
     "maxPublicationsPerDay": 1,
-    "dailyLimitScope": "account-and-Asia/Shanghai-calendar-date",
+    "dailyLimitScope": "platform-and-account-and-Asia/Shanghai-calendar-date",
     "requireCurrentManifestMatchBeforeSubmit": true,
     "requireScheduleWindowBeforeSubmit": true,
     "requireOfficialListAndPersistentReceiptCheckBeforeUpload": true,
@@ -78,31 +54,145 @@
     "onUncertainSubmission": "Stop. Inspect the official work list and save evidence. Never re-upload or click publish again while the outcome is uncertain.",
     "onExistingExactTitle": "Do not publish again. Collect official-list evidence and report the existing work for reconciliation.",
     "retryRequiresAuthoritativeAbsenceAndNewAuthorization": true,
-    "testPackagesAreNeverAuthorization": true
+    "testPackagesAreNeverAuthorization": true,
+    "platformsHaveIndependentReceipts": true,
+    "completionRequiresAllPlatforms": true,
+    "doNotRepeatSuccessfulPlatform": true
   },
-  "evidence": {
-    "requiredForPublished": [
-      "taskId",
-      "releaseId",
-      "renderSha256",
-      "accountId",
-      "exactTitle",
-      "officialWorkListUrl",
-      "workIdOrUrl",
-      "submittedState",
-      "verifiedAt",
-      "viewportScreenshot"
-    ],
-    "acceptedSubmittedStates": [
-      "published",
-      "under_review"
-    ],
-    "screenshot": {
-      "fullPage": false,
-      "matchedWorkMustBeVisible": true
+  "platformOrder": [
+    "douyin",
+    "xiaohongshu"
+  ],
+  "platforms": {
+    "douyin": {
+      "platformTaskId": "b5dc24749d766fe5b8d3a6ef15edb0048a56e4931cd565e539ce739dfe2ea934",
+      "platform": "douyin",
+      "mode": "publish",
+      "testOnly": false,
+      "status": "ready",
+      "submitAuthorized": true,
+      "copy": {
+        "title": "当所有人都说你记错了",
+        "description": "明明记得不是那样，却被所有人说成记错了，久了连自己也会动摇。《1984》把这种窒息推到极处，也提醒我们：在众声喧哗时，仍要承认自己看见过什么、感受过什么。",
+        "hashtags": [
+          "#1984",
+          "#乔治奥威尔",
+          "#读书",
+          "#经典文学",
+          "#独立思考"
+        ]
+      },
+      "settings": {
+        "cover": "first-frame",
+        "visibility": "public",
+        "timing": "immediate",
+        "allowDownload": false,
+        "aiGenerated": true,
+        "commercialPromotion": false,
+        "originalDeclaration": false,
+        "monetization": false
+      },
+      "execution": {
+        "method": "dot-computer-use",
+        "officialCreatorUrl": "https://creator.douyin.com/",
+        "selectMatchingOfficialTopics": true,
+        "originalDeclarationMustBeOff": true,
+        "finalPublishClicks": 1,
+        "onUncertainSubmission": "Stop this platform. Inspect official work/note management before retry. Never re-upload while uncertain.",
+        "onUnsupportedSetting": "Stop this platform and report. Never invent settings or declarations."
+      },
+      "evidence": {
+        "requiredForPublished": [
+          "platform",
+          "platformTaskId",
+          "taskId",
+          "releaseId",
+          "renderSha256",
+          "accountId",
+          "exactTitle",
+          "officialWorkListUrl",
+          "workIdOrUrl",
+          "submittedState",
+          "verifiedAt",
+          "viewportScreenshot"
+        ],
+        "acceptedSubmittedStates": [
+          "published",
+          "under_review"
+        ],
+        "screenshot": {
+          "fullPage": false,
+          "matchedWorkMustBeVisible": true
+        },
+        "mustReturnEvidenceToUser": true,
+        "chatClaimOrUploadCompletionIsNotProof": true,
+        "missingEvidenceOutcome": "unverified"
+      }
     },
-    "mustReturnEvidenceToUser": true,
-    "chatClaimOrUploadCompletionIsNotProof": true,
-    "missingEvidenceOutcome": "unverified"
+    "xiaohongshu": {
+      "platformTaskId": "f3c142de55cab7b67e50cf57722cdce2252f6c056353cf4cf3891568e5cb57fd",
+      "platform": "xiaohongshu",
+      "mode": "publish",
+      "testOnly": false,
+      "status": "ready",
+      "submitAuthorized": true,
+      "copy": {
+        "title": "当所有人都说你记错了",
+        "description": "明明记得不是那样，却被所有人说成记错了，久了连自己也会动摇。《1984》把这种窒息推到极处，也提醒我们：在众声喧哗时，仍要承认自己看见过什么、感受过什么。",
+        "hashtags": [
+          "#1984",
+          "#乔治奥威尔",
+          "#读书",
+          "#经典文学",
+          "#独立思考"
+        ]
+      },
+      "settings": {
+        "cover": "first-frame",
+        "visibility": "public",
+        "timing": "immediate",
+        "allowDownload": false,
+        "aiGenerated": true,
+        "commercialPromotion": false,
+        "originalDeclaration": false,
+        "monetization": false
+      },
+      "execution": {
+        "method": "dot-computer-use",
+        "officialCreatorUrl": "https://creator.xiaohongshu.com/",
+        "selectMatchingOfficialTopics": true,
+        "originalDeclarationMustBeOff": true,
+        "finalPublishClicks": 1,
+        "onUncertainSubmission": "Stop this platform. Inspect official work/note management before retry. Never re-upload while uncertain.",
+        "onUnsupportedSetting": "Stop this platform and report. Never invent settings or declarations."
+      },
+      "evidence": {
+        "requiredForPublished": [
+          "platform",
+          "platformTaskId",
+          "taskId",
+          "releaseId",
+          "renderSha256",
+          "accountId",
+          "exactTitle",
+          "officialWorkListUrl",
+          "workIdOrUrl",
+          "submittedState",
+          "verifiedAt",
+          "viewportScreenshot"
+        ],
+        "acceptedSubmittedStates": [
+          "published",
+          "under_review"
+        ],
+        "screenshot": {
+          "fullPage": false,
+          "matchedWorkMustBeVisible": true
+        },
+        "mustReturnEvidenceToUser": true,
+        "chatClaimOrUploadCompletionIsNotProof": true,
+        "missingEvidenceOutcome": "unverified"
+      }
+    }
   }
 }

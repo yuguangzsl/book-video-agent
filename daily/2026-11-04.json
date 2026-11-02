@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "kind": "dot-publication-task",
-  "taskId": "2c558dc3c48a2504febaaf20d2b335490842a951731e22353d9e7ec417aaa5ea",
-  "platform": "douyin",
+  "taskId": "5faf6b247b278654ce3424a17c577582aa3ed54cf3659737e394ac0be385c5d7",
+  "platform": "multi-platform",
   "mode": "publish",
   "testOnly": false,
   "status": "ready",
@@ -34,34 +34,10 @@
     "durationSeconds": 59.1,
     "verifyDownloadedHashBeforeUpload": true
   },
-  "copy": {
-    "title": "人需要看见自己的努力有回声",
-    "description": "忙了一整天，最累的也许不是事情太多，而是说不清究竟做成了什么。《这游戏也太真实了》把共同重建写得热闹，也提醒我们：拧紧一个龙头、换亮一盏灯，具体的小变化会让努力重新有回声。",
-    "hashtags": [
-      "#这游戏也太真实了",
-      "#晨星LL",
-      "#读书",
-      "#生活感悟",
-      "#情绪共鸣"
-    ]
-  },
-  "settings": {
-    "cover": "first-frame",
-    "visibility": "public",
-    "timing": "immediate",
-    "allowDownload": false,
-    "aiGenerated": true,
-    "commercialPromotion": false,
-    "originalDeclaration": false,
-    "monetization": false,
-    "location": ""
-  },
   "execution": {
     "method": "dot-computer-use",
-    "officialUploadUrl": "https://creator.douyin.com/creator-micro/content/upload",
-    "officialWorkListUrl": "https://creator.douyin.com/creator-micro/content/manage",
     "maxPublicationsPerDay": 1,
-    "dailyLimitScope": "account-and-Asia/Shanghai-calendar-date",
+    "dailyLimitScope": "platform-and-account-and-Asia/Shanghai-calendar-date",
     "requireCurrentManifestMatchBeforeSubmit": true,
     "requireScheduleWindowBeforeSubmit": true,
     "requireOfficialListAndPersistentReceiptCheckBeforeUpload": true,
@@ -78,31 +54,145 @@
     "onUncertainSubmission": "Stop. Inspect the official work list and save evidence. Never re-upload or click publish again while the outcome is uncertain.",
     "onExistingExactTitle": "Do not publish again. Collect official-list evidence and report the existing work for reconciliation.",
     "retryRequiresAuthoritativeAbsenceAndNewAuthorization": true,
-    "testPackagesAreNeverAuthorization": true
+    "testPackagesAreNeverAuthorization": true,
+    "platformsHaveIndependentReceipts": true,
+    "completionRequiresAllPlatforms": true,
+    "doNotRepeatSuccessfulPlatform": true
   },
-  "evidence": {
-    "requiredForPublished": [
-      "taskId",
-      "releaseId",
-      "renderSha256",
-      "accountId",
-      "exactTitle",
-      "officialWorkListUrl",
-      "workIdOrUrl",
-      "submittedState",
-      "verifiedAt",
-      "viewportScreenshot"
-    ],
-    "acceptedSubmittedStates": [
-      "published",
-      "under_review"
-    ],
-    "screenshot": {
-      "fullPage": false,
-      "matchedWorkMustBeVisible": true
+  "platformOrder": [
+    "douyin",
+    "xiaohongshu"
+  ],
+  "platforms": {
+    "douyin": {
+      "platformTaskId": "2c558dc3c48a2504febaaf20d2b335490842a951731e22353d9e7ec417aaa5ea",
+      "platform": "douyin",
+      "mode": "publish",
+      "testOnly": false,
+      "status": "ready",
+      "submitAuthorized": true,
+      "copy": {
+        "title": "人需要看见自己的努力有回声",
+        "description": "忙了一整天，最累的也许不是事情太多，而是说不清究竟做成了什么。《这游戏也太真实了》把共同重建写得热闹，也提醒我们：拧紧一个龙头、换亮一盏灯，具体的小变化会让努力重新有回声。",
+        "hashtags": [
+          "#这游戏也太真实了",
+          "#晨星LL",
+          "#读书",
+          "#生活感悟",
+          "#情绪共鸣"
+        ]
+      },
+      "settings": {
+        "cover": "first-frame",
+        "visibility": "public",
+        "timing": "immediate",
+        "allowDownload": false,
+        "aiGenerated": true,
+        "commercialPromotion": false,
+        "originalDeclaration": false,
+        "monetization": false
+      },
+      "execution": {
+        "method": "dot-computer-use",
+        "officialCreatorUrl": "https://creator.douyin.com/",
+        "selectMatchingOfficialTopics": true,
+        "originalDeclarationMustBeOff": true,
+        "finalPublishClicks": 1,
+        "onUncertainSubmission": "Stop this platform. Inspect official work/note management before retry. Never re-upload while uncertain.",
+        "onUnsupportedSetting": "Stop this platform and report. Never invent settings or declarations."
+      },
+      "evidence": {
+        "requiredForPublished": [
+          "platform",
+          "platformTaskId",
+          "taskId",
+          "releaseId",
+          "renderSha256",
+          "accountId",
+          "exactTitle",
+          "officialWorkListUrl",
+          "workIdOrUrl",
+          "submittedState",
+          "verifiedAt",
+          "viewportScreenshot"
+        ],
+        "acceptedSubmittedStates": [
+          "published",
+          "under_review"
+        ],
+        "screenshot": {
+          "fullPage": false,
+          "matchedWorkMustBeVisible": true
+        },
+        "mustReturnEvidenceToUser": true,
+        "chatClaimOrUploadCompletionIsNotProof": true,
+        "missingEvidenceOutcome": "unverified"
+      }
     },
-    "mustReturnEvidenceToUser": true,
-    "chatClaimOrUploadCompletionIsNotProof": true,
-    "missingEvidenceOutcome": "unverified"
+    "xiaohongshu": {
+      "platformTaskId": "8d4a599a06dc8161d3c8695fbd81b16bb1eb6dfb042975bee545268d1dcd0f4f",
+      "platform": "xiaohongshu",
+      "mode": "publish",
+      "testOnly": false,
+      "status": "ready",
+      "submitAuthorized": true,
+      "copy": {
+        "title": "人需要看见自己的努力有回声",
+        "description": "忙了一整天，最累的也许不是事情太多，而是说不清究竟做成了什么。《这游戏也太真实了》把共同重建写得热闹，也提醒我们：拧紧一个龙头、换亮一盏灯，具体的小变化会让努力重新有回声。",
+        "hashtags": [
+          "#这游戏也太真实了",
+          "#晨星LL",
+          "#读书",
+          "#生活感悟",
+          "#情绪共鸣"
+        ]
+      },
+      "settings": {
+        "cover": "first-frame",
+        "visibility": "public",
+        "timing": "immediate",
+        "allowDownload": false,
+        "aiGenerated": true,
+        "commercialPromotion": false,
+        "originalDeclaration": false,
+        "monetization": false
+      },
+      "execution": {
+        "method": "dot-computer-use",
+        "officialCreatorUrl": "https://creator.xiaohongshu.com/",
+        "selectMatchingOfficialTopics": true,
+        "originalDeclarationMustBeOff": true,
+        "finalPublishClicks": 1,
+        "onUncertainSubmission": "Stop this platform. Inspect official work/note management before retry. Never re-upload while uncertain.",
+        "onUnsupportedSetting": "Stop this platform and report. Never invent settings or declarations."
+      },
+      "evidence": {
+        "requiredForPublished": [
+          "platform",
+          "platformTaskId",
+          "taskId",
+          "releaseId",
+          "renderSha256",
+          "accountId",
+          "exactTitle",
+          "officialWorkListUrl",
+          "workIdOrUrl",
+          "submittedState",
+          "verifiedAt",
+          "viewportScreenshot"
+        ],
+        "acceptedSubmittedStates": [
+          "published",
+          "under_review"
+        ],
+        "screenshot": {
+          "fullPage": false,
+          "matchedWorkMustBeVisible": true
+        },
+        "mustReturnEvidenceToUser": true,
+        "chatClaimOrUploadCompletionIsNotProof": true,
+        "missingEvidenceOutcome": "unverified"
+      }
+    }
   }
 }
