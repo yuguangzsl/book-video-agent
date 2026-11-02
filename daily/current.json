@@ -82,5 +82,19 @@
   ],
   "maxPublicationsPerDayPerPlatform": 1,
   "platformCompletionPolicy": "independent-receipts; all-platforms-required; never-repeat-success",
-  "instructionFile": "daily/README.md"
+  "instructionFile": "daily/README.md",
+  "channelPolicy": {
+    "requiredPlatforms": [
+      "douyin",
+      "xiaohongshu"
+    ],
+    "appliesTo": "all-current-and-future-GitHub-publication-tasks",
+    "requireBothPlatformsInEveryTask": true,
+    "requirePlatformSpecificCopySettingsAndIdentity": true,
+    "rejectMissingRequiredPlatform": true,
+    "publicationMethod": "dot-computer-use",
+    "independentReceiptsRequired": true,
+    "doNotRepeatSuccessfulPlatform": true,
+    "completionRequiresAllRequiredPlatforms": true
+  }
 }
