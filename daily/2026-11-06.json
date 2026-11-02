@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "kind": "dot-publication-task",
+  "taskId": "eb9d0a007b9ade580019f8503ad2f4670733db1ad1d47ab18241d9d30ca16f72",
+  "platform": "douyin",
+  "mode": "publish",
+  "testOnly": false,
+  "status": "ready",
+  "submitAuthorized": true,
+  "blockedReasons": [],
+  "generatedAt": "2026-11-02T04:11:11.620Z",
+  "releaseId": "fc3b4761df278ab5c2be7d9e93f44c05f689c076b770d593d2d79c0afc252f02",
+  "renderSha256": "1f4af5a5736e9ba541b71172aad58712857c6c264debf558890ee8933eebe193",
+  "account": {
+    "id": null,
+    "selection": "managed-by-dot",
+    "mustMatchPublicIdBeforeSubmit": false,
+    "requireSameAccountThroughoutExecution": true
+  },
+  "schedule": {
+    "timeZone": "Asia/Shanghai",
+    "managedBy": "dot",
+    "date": "2026-11-06",
+    "time": null,
+    "notBefore": "2026-11-06T00:00:00+08:00",
+    "expiresAt": "2026-11-06T16:00:00.000Z"
+  },
+  "media": {
+    "url": "https://github.com/yuguangzsl/book-video-agent/releases/download/douyin-2026-11-06-fc3b4761/video.mp4",
+    "sha256": "1f4af5a5736e9ba541b71172aad58712857c6c264debf558890ee8933eebe193",
+    "bytes": 13974783,
+    "width": 720,
+    "height": 960,
+    "durationSeconds": 51.95,
+    "verifyDownloadedHashBeforeUpload": true
+  },
+  "copy": {
+    "title": "真正伤人的，往往是没说出口的话",
+    "description": "关系里的裂缝，常常不是突然出现的，而是在一次次“没事”里被藏起来。《假面山庄》让人不安的，不只是伪装，更是熟悉的人之间那些没说出口的话。信任不是从不怀疑，而是愿意一起面对真实。",
+    "hashtags": [
+      "#假面山庄",
+      "#东野圭吾",
+      "#读书",
+      "#悬疑小说",
+      "#关系"
+    ]
+  },
+  "settings": {
+    "cover": "first-frame",
+    "visibility": "public",
+    "timing": "immediate",
+    "allowDownload": false,
+    "aiGenerated": true,
+    "commercialPromotion": false,
+    "originalDeclaration": false,
+    "monetization": false,
+    "location": ""
+  },
+  "execution": {
+    "method": "dot-computer-use",
+    "officialUploadUrl": "https://creator.douyin.com/creator-micro/content/upload",
+    "officialWorkListUrl": "https://creator.douyin.com/creator-micro/content/manage",
+    "maxPublicationsPerDay": 1,
+    "dailyLimitScope": "account-and-Asia/Shanghai-calendar-date",
+    "requireCurrentManifestMatchBeforeSubmit": true,
+    "requireScheduleWindowBeforeSubmit": true,
+    "requireOfficialListAndPersistentReceiptCheckBeforeUpload": true,
+    "blockIfDailyPublicationOrPriorTaskOutcomeUnknown": true,
+    "requireAllHashtagsSelectedFromOfficialSuggestions": true,
+    "blockPlainOrMismatchedHashtags": true,
+    "requireExactCopyAndSettingsReview": true,
+    "cover": {
+      "source": "video-frame",
+      "frameIndex": 0,
+      "requireVisibleBitmapTitleAndAuthor": true
+    },
+    "finalPublishClicks": 1,
+    "onUncertainSubmission": "Stop. Inspect the official work list and save evidence. Never re-upload or click publish again while the outcome is uncertain.",
+    "onExistingExactTitle": "Do not publish again. Collect official-list evidence and report the existing work for reconciliation.",
+    "retryRequiresAuthoritativeAbsenceAndNewAuthorization": true,
+    "testPackagesAreNeverAuthorization": true
+  },
+  "evidence": {
+    "requiredForPublished": [
+      "taskId",
+      "releaseId",
+      "renderSha256",
+      "accountId",
+      "exactTitle",
+      "officialWorkListUrl",
+      "workIdOrUrl",
+      "submittedState",
+      "verifiedAt",
+      "viewportScreenshot"
+    ],
+    "acceptedSubmittedStates": [
+      "published",
+      "under_review"
+    ],
+    "screenshot": {
+      "fullPage": false,
+      "matchedWorkMustBeVisible": true
+    },
+    "mustReturnEvidenceToUser": true,
+    "chatClaimOrUploadCompletionIsNotProof": true,
+    "missingEvidenceOutcome": "unverified"
+  }
+}

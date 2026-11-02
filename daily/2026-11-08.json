@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "kind": "dot-publication-task",
+  "taskId": "04227ae5c7062cce953f1af41c5a902c91f702ef3b0088026c9643e756940cd1",
+  "platform": "douyin",
+  "mode": "publish",
+  "testOnly": false,
+  "status": "ready",
+  "submitAuthorized": true,
+  "blockedReasons": [],
+  "generatedAt": "2026-11-02T04:11:11.699Z",
+  "releaseId": "ea200a8ec1362a50f9a2c7052ca635879cc7fdc1782ec7cdbbd9ed72d12fb43e",
+  "renderSha256": "6f7d590d7bf1727e0f0e8582477f8bd1d1651b60b38f4096fe83a125962b791a",
+  "account": {
+    "id": null,
+    "selection": "managed-by-dot",
+    "mustMatchPublicIdBeforeSubmit": false,
+    "requireSameAccountThroughoutExecution": true
+  },
+  "schedule": {
+    "timeZone": "Asia/Shanghai",
+    "managedBy": "dot",
+    "date": "2026-11-08",
+    "time": null,
+    "notBefore": "2026-11-08T00:00:00+08:00",
+    "expiresAt": "2026-11-08T16:00:00.000Z"
+  },
+  "media": {
+    "url": "https://github.com/yuguangzsl/book-video-agent/releases/download/douyin-2026-11-08-ea200a8e/video.mp4",
+    "sha256": "6f7d590d7bf1727e0f0e8582477f8bd1d1651b60b38f4096fe83a125962b791a",
+    "bytes": 11610792,
+    "width": 720,
+    "height": 960,
+    "durationSeconds": 55.76,
+    "verifyDownloadedHashBeforeUpload": true
+  },
+  "copy": {
+    "title": "暂时不会，不等于你不行",
+    "description": "刚学一项技能时，别人觉得简单的事，自己却总是反复出错。《超神机械师》让我想到那些笨拙的开始：装错了可以拆开再试，卡住了也能停一会儿。今天没做成那件大事，也可能比昨天多懂了一点。暂时不会，不等于你不行。",
+    "hashtags": [
+      "#超神机械师",
+      "#齐佩甲",
+      "#读书",
+      "#成长",
+      "#学习"
+    ]
+  },
+  "settings": {
+    "cover": "first-frame",
+    "visibility": "public",
+    "timing": "immediate",
+    "allowDownload": false,
+    "aiGenerated": true,
+    "commercialPromotion": false,
+    "originalDeclaration": false,
+    "monetization": false,
+    "location": ""
+  },
+  "execution": {
+    "method": "dot-computer-use",
+    "officialUploadUrl": "https://creator.douyin.com/creator-micro/content/upload",
+    "officialWorkListUrl": "https://creator.douyin.com/creator-micro/content/manage",
+    "maxPublicationsPerDay": 1,
+    "dailyLimitScope": "account-and-Asia/Shanghai-calendar-date",
+    "requireCurrentManifestMatchBeforeSubmit": true,
+    "requireScheduleWindowBeforeSubmit": true,
+    "requireOfficialListAndPersistentReceiptCheckBeforeUpload": true,
+    "blockIfDailyPublicationOrPriorTaskOutcomeUnknown": true,
+    "requireAllHashtagsSelectedFromOfficialSuggestions": true,
+    "blockPlainOrMismatchedHashtags": true,
+    "requireExactCopyAndSettingsReview": true,
+    "cover": {
+      "source": "video-frame",
+      "frameIndex": 0,
+      "requireVisibleBitmapTitleAndAuthor": true
+    },
+    "finalPublishClicks": 1,
+    "onUncertainSubmission": "Stop. Inspect the official work list and save evidence. Never re-upload or click publish again while the outcome is uncertain.",
+    "onExistingExactTitle": "Do not publish again. Collect official-list evidence and report the existing work for reconciliation.",
+    "retryRequiresAuthoritativeAbsenceAndNewAuthorization": true,
+    "testPackagesAreNeverAuthorization": true
+  },
+  "evidence": {
+    "requiredForPublished": [
+      "taskId",
+      "releaseId",
+      "renderSha256",
+      "accountId",
+      "exactTitle",
+      "officialWorkListUrl",
+      "workIdOrUrl",
+      "submittedState",
+      "verifiedAt",
+      "viewportScreenshot"
+    ],
+    "acceptedSubmittedStates": [
+      "published",
+      "under_review"
+    ],
+    "screenshot": {
+      "fullPage": false,
+      "matchedWorkMustBeVisible": true
+    },
+    "mustReturnEvidenceToUser": true,
+    "chatClaimOrUploadCompletionIsNotProof": true,
+    "missingEvidenceOutcome": "unverified"
+  }
+}

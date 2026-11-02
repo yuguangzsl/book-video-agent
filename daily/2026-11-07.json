@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "kind": "dot-publication-task",
+  "taskId": "b7f96fc71be745375daeb4533d159c3c663dd2de91b18ca8a06c19b4b1463fec",
+  "platform": "douyin",
+  "mode": "publish",
+  "testOnly": false,
+  "status": "ready",
+  "submitAuthorized": true,
+  "blockedReasons": [],
+  "generatedAt": "2026-11-02T04:11:11.660Z",
+  "releaseId": "34b8a3d01b87272d513e30003925575a54fd7ca3519a90afbd61c8125e501f1e",
+  "renderSha256": "e328594d065bf18b82bea22fb3a9787cf9fa1c90560b1965e798c4c8d4f51452",
+  "account": {
+    "id": null,
+    "selection": "managed-by-dot",
+    "mustMatchPublicIdBeforeSubmit": false,
+    "requireSameAccountThroughoutExecution": true
+  },
+  "schedule": {
+    "timeZone": "Asia/Shanghai",
+    "managedBy": "dot",
+    "date": "2026-11-07",
+    "time": null,
+    "notBefore": "2026-11-07T00:00:00+08:00",
+    "expiresAt": "2026-11-07T16:00:00.000Z"
+  },
+  "media": {
+    "url": "https://github.com/yuguangzsl/book-video-agent/releases/download/douyin-2026-11-07-34b8a3d0/video.mp4",
+    "sha256": "e328594d065bf18b82bea22fb3a9787cf9fa1c90560b1965e798c4c8d4f51452",
+    "bytes": 13110981,
+    "width": 720,
+    "height": 960,
+    "durationSeconds": 57.4,
+    "verifyDownloadedHashBeforeUpload": true
+  },
+  "copy": {
+    "title": "没疼，不等于可以一直不管",
+    "description": "体检数字升高但身体没有疼痛时，最容易做的就是先放一边。《疯狂的尿酸 不止是痛风》提醒我们：健康管理不是突然戒掉所有喜欢的东西，也不是照着清单吓自己。具体风险怎么判断、是否需要药物，应由医生结合个人情况决定；能做的是认真复查，再稳定调整饮食、饮水和运动。",
+    "hashtags": [
+      "#疯狂的尿酸",
+      "#健康管理",
+      "#体检",
+      "#读书",
+      "#生活方式"
+    ]
+  },
+  "settings": {
+    "cover": "first-frame",
+    "visibility": "public",
+    "timing": "immediate",
+    "allowDownload": false,
+    "aiGenerated": true,
+    "commercialPromotion": false,
+    "originalDeclaration": false,
+    "monetization": false,
+    "location": ""
+  },
+  "execution": {
+    "method": "dot-computer-use",
+    "officialUploadUrl": "https://creator.douyin.com/creator-micro/content/upload",
+    "officialWorkListUrl": "https://creator.douyin.com/creator-micro/content/manage",
+    "maxPublicationsPerDay": 1,
+    "dailyLimitScope": "account-and-Asia/Shanghai-calendar-date",
+    "requireCurrentManifestMatchBeforeSubmit": true,
+    "requireScheduleWindowBeforeSubmit": true,
+    "requireOfficialListAndPersistentReceiptCheckBeforeUpload": true,
+    "blockIfDailyPublicationOrPriorTaskOutcomeUnknown": true,
+    "requireAllHashtagsSelectedFromOfficialSuggestions": true,
+    "blockPlainOrMismatchedHashtags": true,
+    "requireExactCopyAndSettingsReview": true,
+    "cover": {
+      "source": "video-frame",
+      "frameIndex": 0,
+      "requireVisibleBitmapTitleAndAuthor": true
+    },
+    "finalPublishClicks": 1,
+    "onUncertainSubmission": "Stop. Inspect the official work list and save evidence. Never re-upload or click publish again while the outcome is uncertain.",
+    "onExistingExactTitle": "Do not publish again. Collect official-list evidence and report the existing work for reconciliation.",
+    "retryRequiresAuthoritativeAbsenceAndNewAuthorization": true,
+    "testPackagesAreNeverAuthorization": true
+  },
+  "evidence": {
+    "requiredForPublished": [
+      "taskId",
+      "releaseId",
+      "renderSha256",
+      "accountId",
+      "exactTitle",
+      "officialWorkListUrl",
+      "workIdOrUrl",
+      "submittedState",
+      "verifiedAt",
+      "viewportScreenshot"
+    ],
+    "acceptedSubmittedStates": [
+      "published",
+      "under_review"
+    ],
+    "screenshot": {
+      "fullPage": false,
+      "matchedWorkMustBeVisible": true
+    },
+    "mustReturnEvidenceToUser": true,
+    "chatClaimOrUploadCompletionIsNotProof": true,
+    "missingEvidenceOutcome": "unverified"
+  }
+}

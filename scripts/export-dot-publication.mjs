@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { exportDotPublication } from "./lib/dot-publication-manifest.mjs";
+import { exportDotPublication, exportDotPublicationCalendar } from "./lib/dot-publication-manifest.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const USAGE = "node scripts/export-dot-publication.mjs --position <n> [--media-url <HTTPS>] [--output <dir>] [--account-id <public-id>] [--publish-date YYYY-MM-DD] [--publish-time HH:mm] [--hold-reason <text>]";
+const USAGE = "node scripts/export-dot-publication.mjs (--plan <JSON-file> | --position <n> --publish-date YYYY-MM-DD [--media-url <HTTPS>] [--account-id <public-id>] [--publish-time HH:mm] [--hold-reason <text>]) [--output <dir>]";
 const KEYS = {
   position: "position", "media-url": "mediaUrl", output: "output", "account-id": "accountId",
-  "publish-date": "publishDate", "publish-time": "publishTime", "hold-reason": "holdReason",
+  "publish-date": "publishDate", "publish-time": "publishTime", "hold-reason": "holdReason", plan: "plan",
 };
 
 try {
@@ -25,14 +26,26 @@ try {
       }
       options[key] = value;
     }
-    const result = exportDotPublication(ROOT, options);
+    let result;
+    if (options.plan) {
+      if (Object.keys(options).some((key) => !["plan", "output"].includes(key))) {
+        throw new Error("--plan cannot be combined with single-task arguments");
+      }
+      const plan = JSON.parse(fs.readFileSync(path.resolve(options.plan), "utf8"));
+      if (!plan || typeof plan !== "object" || Array.isArray(plan)
+        || Object.keys(plan).some((key) => key !== "entries")) throw new Error("Plan must contain only entries");
+      result = exportDotPublicationCalendar(ROOT, { entries: plan.entries, output: options.output });
+    } else {
+      result = exportDotPublication(ROOT, options);
+    }
     process.stdout.write(`${JSON.stringify({
-      status: result.task.status,
-      submitAuthorized: result.task.submitAuthorized,
-      taskId: result.task.taskId,
-      blockedReasons: result.task.blockedReasons,
-      taskFile: result.current.taskFile,
-      currentFile: "daily/current.json",
+      status: "exported",
+      tasks: result.tasks.map((task) => ({
+        publishDate: task.schedule.date, status: task.status, submitAuthorized: task.submitAuthorized,
+        taskId: task.taskId, blockedReasons: task.blockedReasons,
+        taskFile: result.current.entries[task.schedule.date].taskFile,
+      })),
+      currentFile: result.currentFile,
     }, null, 2)}\n`);
   }
 } catch (error) {

@@ -1,124 +1,79 @@
 {
-  "schemaVersion": 1,
-  "kind": "dot-publication-daily",
+  "schemaVersion": 2,
+  "kind": "dot-publication-calendar",
   "mode": "publish",
   "testOnly": false,
-  "status": "blocked",
-  "submitAuthorized": false,
-  "timeZone": "Asia/Shanghai",
-  "date": null,
   "maxPublicationsPerDay": 1,
-  "taskFile": "tasks/89ae0d3bd0935b46080be7b4f848fddba672e825f447ae2207376f8ea4872a2d/0ce103a26a9fa840d34186df17185ffbe13033b2a71c27b1d933266b405884cb.json",
-  "taskSha256": "0ce103a26a9fa840d34186df17185ffbe13033b2a71c27b1d933266b405884cb",
-  "task": {
-    "schemaVersion": 1,
-    "kind": "dot-publication-task",
-    "taskId": "89ae0d3bd0935b46080be7b4f848fddba672e825f447ae2207376f8ea4872a2d",
-    "platform": "douyin",
-    "mode": "publish",
-    "testOnly": false,
-    "status": "blocked",
-    "submitAuthorized": false,
-    "blockedReasons": [
-      "missing-media-url",
-      "external-publication-unverified"
-    ],
-    "generatedAt": "2026-11-02T03:39:20.515Z",
-    "releaseId": "7b850075465f8c886b00b31cefa326e1fb40d83838a2981a0d48beef25e8228f",
-    "renderSha256": "9861fab03c3cf16a635ea907632b0a03a248dfe2cc63e27ab13d1648ba89bb4b",
-    "account": {
-      "id": null,
-      "selection": "managed-by-dot",
-      "mustMatchPublicIdBeforeSubmit": false,
-      "requireSameAccountThroughoutExecution": true
+  "selection": {
+    "timeZone": "Asia/Shanghai",
+    "strategy": "strict-today-only",
+    "onNoTask": "stop",
+    "allowEarly": false,
+    "allowCatchUp": false
+  },
+  "entries": {
+    "2026-11-03": {
+      "taskFile": "daily/2026-11-03.json",
+      "taskSha256": "4d0839efa224a1832c39a99d1dda1016c297a35f4145d9112e2a991ca9434854",
+      "taskId": "69df4e55f57d97b9e026d6006d9d87f11b291a592a584e16278fc19c1e0090e6",
+      "releaseId": "586e4fa221444d64935e6c6022ff9522c16017f6a3fc5c48b02bc5075e27de2b",
+      "renderSha256": "3cf19722ab54a7e577baa8ff970baa3fd2a7fb0eb10a2c2851cc505505180e00",
+      "status": "ready",
+      "submitAuthorized": true
     },
-    "schedule": {
-      "timeZone": "Asia/Shanghai",
-      "managedBy": "dot",
-      "date": null,
-      "time": null,
-      "notBefore": null,
-      "expiresAt": null
+    "2026-11-04": {
+      "taskFile": "daily/2026-11-04.json",
+      "taskSha256": "430333a4fa1f4a2569b077758a83a1aa1fa9f8d53b33412a9e938fd497d88cc0",
+      "taskId": "2c558dc3c48a2504febaaf20d2b335490842a951731e22353d9e7ec417aaa5ea",
+      "releaseId": "57d4365ef855e53221429dad68eab9dbf1567908fd1177ce846cf3c786e25208",
+      "renderSha256": "9b183e1b4ffafb08c2e1c121f255dc92c63b5be234b43b406b5154f27cebea2e",
+      "status": "ready",
+      "submitAuthorized": true
     },
-    "media": {
-      "url": null,
-      "sha256": "9861fab03c3cf16a635ea907632b0a03a248dfe2cc63e27ab13d1648ba89bb4b",
-      "bytes": 10552673,
-      "width": 720,
-      "height": 960,
-      "durationSeconds": 55.1,
-      "verifyDownloadedHashBeforeUpload": true
+    "2026-11-05": {
+      "taskFile": "daily/2026-11-05.json",
+      "taskSha256": "d4a203303009504bf94becaa5ff7b397bb41f904c054446fce6005dd31ee5f0e",
+      "taskId": "b5dc24749d766fe5b8d3a6ef15edb0048a56e4931cd565e539ce739dfe2ea934",
+      "releaseId": "467fffaadb57cd70e6f4b9b3281cf51794971446b2bf905f5f74da543b4081fd",
+      "renderSha256": "0d323291c6f3c22a54b23f27147b301e2b862caffa38dddac092d2a822eca77c",
+      "status": "ready",
+      "submitAuthorized": true
     },
-    "copy": {
-      "title": "有些疲惫，只有夜里才敢承认",
-      "description": "白天照常开会、回消息，只有夜里才敢承认很累。《夜的命名术》让人看见：说出感受不一定立刻解决问题，却能让焦虑有名字，也让下一步慢慢清楚。",
-      "hashtags": [
-        "#夜的命名术",
-        "#会说话的肘子",
-        "#读书",
-        "#情绪共鸣",
-        "#生活感悟"
-      ]
+    "2026-11-06": {
+      "taskFile": "daily/2026-11-06.json",
+      "taskSha256": "25d9f6561706f38d8cea5f60a1466749aeacbfd6f5cbf92f1f33fe427734db27",
+      "taskId": "eb9d0a007b9ade580019f8503ad2f4670733db1ad1d47ab18241d9d30ca16f72",
+      "releaseId": "fc3b4761df278ab5c2be7d9e93f44c05f689c076b770d593d2d79c0afc252f02",
+      "renderSha256": "1f4af5a5736e9ba541b71172aad58712857c6c264debf558890ee8933eebe193",
+      "status": "ready",
+      "submitAuthorized": true
     },
-    "settings": {
-      "cover": "first-frame",
-      "visibility": "public",
-      "timing": "immediate",
-      "allowDownload": false,
-      "aiGenerated": true,
-      "commercialPromotion": false,
-      "originalDeclaration": false,
-      "monetization": false,
-      "location": ""
+    "2026-11-07": {
+      "taskFile": "daily/2026-11-07.json",
+      "taskSha256": "01dc28d386cd875dff19770bb61909eea77cd973c78c8ecf072c1ca75847913a",
+      "taskId": "b7f96fc71be745375daeb4533d159c3c663dd2de91b18ca8a06c19b4b1463fec",
+      "releaseId": "34b8a3d01b87272d513e30003925575a54fd7ca3519a90afbd61c8125e501f1e",
+      "renderSha256": "e328594d065bf18b82bea22fb3a9787cf9fa1c90560b1965e798c4c8d4f51452",
+      "status": "ready",
+      "submitAuthorized": true
     },
-    "execution": {
-      "method": "dot-computer-use",
-      "officialUploadUrl": "https://creator.douyin.com/creator-micro/content/upload",
-      "officialWorkListUrl": "https://creator.douyin.com/creator-micro/content/manage",
-      "maxPublicationsPerDay": 1,
-      "dailyLimitScope": "account-and-Asia/Shanghai-calendar-date",
-      "requireCurrentManifestMatchBeforeSubmit": true,
-      "requireScheduleWindowBeforeSubmit": false,
-      "requireOfficialListAndPersistentReceiptCheckBeforeUpload": true,
-      "blockIfDailyPublicationOrPriorTaskOutcomeUnknown": true,
-      "requireAllHashtagsSelectedFromOfficialSuggestions": true,
-      "blockPlainOrMismatchedHashtags": true,
-      "requireExactCopyAndSettingsReview": true,
-      "cover": {
-        "source": "video-frame",
-        "frameIndex": 0,
-        "requireVisibleBitmapTitleAndAuthor": true
-      },
-      "finalPublishClicks": 1,
-      "onUncertainSubmission": "Stop. Inspect the official work list and save evidence. Never re-upload or click publish again while the outcome is uncertain.",
-      "onExistingExactTitle": "Do not publish again. Collect official-list evidence and report the existing work for reconciliation.",
-      "retryRequiresAuthoritativeAbsenceAndNewAuthorization": true,
-      "testPackagesAreNeverAuthorization": true
+    "2026-11-08": {
+      "taskFile": "daily/2026-11-08.json",
+      "taskSha256": "3cb4eccf388c8f876745c56f6b138286ce815e43203cfc876f510051b6a2bbe9",
+      "taskId": "04227ae5c7062cce953f1af41c5a902c91f702ef3b0088026c9643e756940cd1",
+      "releaseId": "ea200a8ec1362a50f9a2c7052ca635879cc7fdc1782ec7cdbbd9ed72d12fb43e",
+      "renderSha256": "6f7d590d7bf1727e0f0e8582477f8bd1d1651b60b38f4096fe83a125962b791a",
+      "status": "ready",
+      "submitAuthorized": true
     },
-    "evidence": {
-      "requiredForPublished": [
-        "taskId",
-        "releaseId",
-        "renderSha256",
-        "accountId",
-        "exactTitle",
-        "officialWorkListUrl",
-        "workIdOrUrl",
-        "submittedState",
-        "verifiedAt",
-        "viewportScreenshot"
-      ],
-      "acceptedSubmittedStates": [
-        "published",
-        "under_review"
-      ],
-      "screenshot": {
-        "fullPage": false,
-        "matchedWorkMustBeVisible": true
-      },
-      "mustReturnEvidenceToUser": true,
-      "chatClaimOrUploadCompletionIsNotProof": true,
-      "missingEvidenceOutcome": "unverified"
+    "2026-11-09": {
+      "taskFile": "daily/2026-11-09.json",
+      "taskSha256": "eccb11fcd8507ae2ffdc4612121dbd4c8a0df21c2de4d6cf5314c35ad1ef02f8",
+      "taskId": "db7c7851066093f0fb50f971a8a90e992f1d6e01f453df6f3ad0a213b00b8c4a",
+      "releaseId": "f01ce25ab466fa1a322e72a150276f66406c38592e25b12d9713182611512ec3",
+      "renderSha256": "359999d82723d5c8ccbad04431405bb0589c5b690584776c9e6c6e30a5cf625a",
+      "status": "ready",
+      "submitAuthorized": true
     }
   }
 }

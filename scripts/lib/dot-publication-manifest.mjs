@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { buildPublicationBrief } from "./publication-workflow.mjs";
@@ -35,7 +36,7 @@ function mediaUrl(value) {
 
 function publicationDate(value) {
   const text = optionalText(value, "publishDate");
-  if (!text) return null;
+  assert(text, "publishDate is required");
   assert(/^\d{4}-\d{2}-\d{2}$/u.test(text), "publishDate must be YYYY-MM-DD");
   const date = new Date(`${text}T00:00:00.000Z`);
   assert(Number.isFinite(date.valueOf()) && date.toISOString().slice(0, 10) === text,
@@ -75,10 +76,8 @@ export function buildDotPublicationTask(brief, options = {}) {
     blockedReasons.push("unresolved-publication-attempt");
   }
   if (options.publicationHistory?.attemptCount >= 3) blockedReasons.push("publication-attempt-limit");
-  const notBefore = date && time ? `${date}T${time}:00+08:00` : null;
-  const expiresAt = date
-    ? new Date(Date.parse(`${date}T00:00:00+08:00`) + 86400000).toISOString()
-    : null;
+  const notBefore = `${date}T${time || "00:00"}:00+08:00`;
+  const expiresAt = new Date(Date.parse(`${date}T00:00:00+08:00`) + 86400000).toISOString();
   if (expiresAt && now.valueOf() >= Date.parse(expiresAt)) blockedReasons.push("publication-date-expired");
   const taskId = createHash("sha256").update(JSON.stringify({
     platform: "douyin", releaseId: brief.releaseId, renderSha256: brief.renderSha256,
@@ -149,31 +148,176 @@ export function buildDotPublicationTask(brief, options = {}) {
   };
 }
 
-export function exportDotPublication(root, options = {}) {
-  assert(Number.isInteger(Number(options.position)) && Number(options.position) > 0,
-    "position must be a positive integer");
-  const brief = buildPublicationBrief(root, { position: Number(options.position) });
-  const history = summarizeProductionRelease(readProductionLedger(root, { required: true }), brief.releaseId);
-  const task = buildDotPublicationTask(brief, { ...options, publicationHistory: history.platforms.douyin });
-  const directory = path.resolve(root, options.output || ".agents/dot-publication-export");
-  const taskText = `${JSON.stringify(task, null, 2)}\n`;
-  const taskSha256 = createHash("sha256").update(taskText).digest("hex");
-  const taskFile = `tasks/${task.taskId}/${taskSha256}.json`;
-  const current = {
-    schemaVersion: 1,
-    kind: "dot-publication-daily",
-    mode: "publish",
-    testOnly: false,
-    status: task.status,
-    submitAuthorized: task.submitAuthorized,
-    timeZone: TIME_ZONE,
-    date: task.schedule.date,
-    maxPublicationsPerDay: 1,
-    taskFile,
-    taskSha256,
-    task,
+const CALENDAR_SELECTION = Object.freeze({
+  timeZone: TIME_ZONE, strategy: "strict-today-only", onNoTask: "stop",
+  allowEarly: false, allowCatchUp: false,
+});
+const jsonText = (value) => `${JSON.stringify(value, null, 2)}\n`;
+const sha256 = (value) => createHash("sha256").update(value).digest("hex");
+const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+
+function calendarEntry(task, taskText) {
+  return {
+    taskFile: `daily/${task.schedule.date}.json`, taskSha256: sha256(taskText),
+    taskId: task.taskId, releaseId: task.releaseId, renderSha256: task.renderSha256,
+    status: task.status, submitAuthorized: task.submitAuthorized,
   };
-  writeFileAtomically(path.join(directory, taskFile), taskText, { encoding: "utf8" });
-  writeFileAtomically(path.join(directory, "daily", "current.json"), `${JSON.stringify(current, null, 2)}\n`, { encoding: "utf8" });
-  return { task, current, directory };
+}
+
+export function validateDotPublicationCalendar(current) {
+  assert(isObject(current) && current.schemaVersion === 2 && current.kind === "dot-publication-calendar",
+    "Unsupported calendar schema; legacy current.json requires explicit migration to schemaVersion 2 in a new output directory");
+  assert(!Object.hasOwn(current, "task") && !Object.hasOwn(current, "taskFile")
+    && !Object.hasOwn(current, "submitAuthorized"), "Calendar must not authorize a top-level task");
+  assert(current.mode === "publish" && current.testOnly === false
+    && current.maxPublicationsPerDay === 1, "Invalid calendar publication policy");
+  assert(isObject(current.selection) && Object.entries(CALENDAR_SELECTION)
+    .every(([key, value]) => current.selection[key] === value), "Calendar must select strictly today in Asia/Shanghai");
+  assert(isObject(current.entries), "Calendar entries must be a date-keyed object");
+  const tasks = new Set();
+  const releases = new Set();
+  for (const [date, entry] of Object.entries(current.entries)) {
+    publicationDate(date);
+    assert(isObject(entry) && entry.taskFile === `daily/${date}.json`, `Invalid taskFile for ${date}`);
+    for (const field of ["taskSha256", "taskId", "releaseId", "renderSha256"]) {
+      assert(typeof entry[field] === "string" && /^[a-f0-9]{64}$/u.test(entry[field]), `Invalid ${field} for ${date}`);
+    }
+    const identity = `${entry.releaseId}:${entry.renderSha256}`;
+    assert(!releases.has(identity), `Duplicate release and render across calendar dates: ${date}`);
+    assert(!tasks.has(entry.taskId), `Duplicate taskId across calendar dates: ${date}`);
+    assert(entry.taskId === sha256(JSON.stringify({ platform: "douyin",
+      releaseId: entry.releaseId, renderSha256: entry.renderSha256 })), `Task identity mismatch for ${date}`);
+    assert(["ready", "blocked"].includes(entry.status)
+      && entry.submitAuthorized === (entry.status === "ready"), `Invalid authorization for ${date}`);
+    tasks.add(entry.taskId);
+    releases.add(identity);
+  }
+  return current;
+}
+
+// taskText must be the exact downloaded bytes, before parsing or reformatting.
+export function validateDotPublicationCalendarTask(current, date, taskText) {
+  validateDotPublicationCalendar(current);
+  publicationDate(date);
+  const entry = current.entries[date];
+  assert(entry, `No calendar task for ${date}`);
+  assert(typeof taskText === "string" && sha256(taskText) === entry.taskSha256, `Task manifest sha256 mismatch for ${date}`);
+  const task = JSON.parse(taskText);
+  assert(task?.schemaVersion === 1 && task.kind === "dot-publication-task"
+    && task.platform === "douyin" && task.mode === "publish" && task.testOnly === false,
+  `Invalid publication task for ${date}`);
+  for (const field of ["taskId", "releaseId", "renderSha256", "status", "submitAuthorized"]) {
+    assert(task[field] === entry[field], `Task/index ${field} mismatch for ${date}`);
+  }
+  assert(task.schedule?.date === date && task.schedule.timeZone === TIME_ZONE,
+    `Task/index date mismatch for ${date}`);
+  const time = task.schedule.time;
+  assert(time === null || (typeof time === "string" && /^(?:[01]\d|2[0-3]):[0-5]\d$/u.test(time)), "Invalid task time");
+  assert(task.schedule.notBefore === `${date}T${time || "00:00"}:00+08:00`
+    && task.schedule.expiresAt === new Date(Date.parse(`${date}T00:00:00+08:00`) + 86400000).toISOString(),
+  `Invalid task schedule window for ${date}`);
+  assert(task.media?.sha256 === task.renderSha256 && task.media.verifyDownloadedHashBeforeUpload === true,
+    `Task media identity mismatch for ${date}`);
+  assert(Array.isArray(task.blockedReasons) && (task.status === "ready"
+    ? task.blockedReasons.length === 0 && mediaUrl(task.media.url)
+    : task.blockedReasons.length > 0), `Invalid task authorization for ${date}`);
+  return task;
+}
+
+export function selectDotPublicationForDate(current, dateOrNow = new Date()) {
+  validateDotPublicationCalendar(current);
+  let date;
+  if (typeof dateOrNow === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(dateOrNow)) {
+    date = publicationDate(dateOrNow);
+  } else {
+    assert(dateOrNow instanceof Date || typeof dateOrNow === "number"
+      || (typeof dateOrNow === "string" && /(?:Z|[+-]\d{2}:\d{2})$/u.test(dateOrNow)),
+    "Current time must include an explicit time zone");
+    const now = dateOrNow instanceof Date ? dateOrNow : new Date(dateOrNow);
+    assert(Number.isFinite(now.valueOf()), "Invalid current time");
+    date = new Date(now.valueOf() + 8 * 3600000).toISOString().slice(0, 10);
+  }
+  const entry = current.entries[date];
+  if (!entry) return { status: "no_task", date, reason: "no-task-for-today" };
+  if (!entry.submitAuthorized) return { status: "blocked", date, entry: { ...entry } };
+  return { status: "selected", date, entry: { ...entry } };
+}
+
+export function exportDotPublicationCalendar(root, options = {}) {
+  assert(Array.isArray(options.entries) && options.entries.length > 0, "entries must be a non-empty array");
+  const directory = path.resolve(root, options.output || ".agents/dot-publication-export");
+  const currentPath = path.join(directory, "daily", "current.json");
+  const currentBefore = fs.existsSync(currentPath) ? fs.readFileSync(currentPath, "utf8") : null;
+  const current = currentBefore !== null
+    ? validateDotPublicationCalendar(JSON.parse(currentBefore))
+    : { schemaVersion: 2, kind: "dot-publication-calendar", mode: "publish", testOnly: false,
+      maxPublicationsPerDay: 1, selection: { ...CALENDAR_SELECTION }, entries: {} };
+  const existingTasks = new Map();
+  for (const [date, entry] of Object.entries(current.entries)) {
+    const text = fs.readFileSync(path.join(directory, entry.taskFile), "utf8");
+    existingTasks.set(date, { task: validateDotPublicationCalendarTask(current, date, text), text });
+  }
+  const ledger = readProductionLedger(root, { required: true });
+  const dates = new Set();
+  const prepared = options.entries.map((entry) => {
+    assert(isObject(entry), "Each plan entry must be an object");
+    const date = publicationDate(entry.publishDate);
+    assert(!dates.has(date), `Duplicate publishDate in plan: ${date}`);
+    dates.add(date);
+    assert(Number.isInteger(Number(entry.position)) && Number(entry.position) > 0,
+      "position must be a positive integer");
+    const brief = buildPublicationBrief(root, { position: Number(entry.position) });
+    const history = summarizeProductionRelease(ledger, brief.releaseId);
+    const taskFile = `daily/${date}.json`;
+    const targetPath = path.join(directory, taskFile);
+    let existing = existingTasks.get(date);
+    if (!existing && fs.existsSync(targetPath)) {
+      const text = fs.readFileSync(targetPath, "utf8");
+      existing = { task: JSON.parse(text), text };
+    }
+    // Preserve the original creation-time decision; date selection still excludes all expired days.
+    let task = buildDotPublicationTask(brief, { ...entry, now: existing ? existing.task.generatedAt : options.now,
+      publicationHistory: history.platforms.douyin });
+    let taskText = jsonText(task);
+    if (existing) {
+      assert(taskText === jsonText(existing.task),
+        `Daily task already exists for ${date}; refusing to replace or reschedule it`);
+      task = existing.task;
+      taskText = existing.text;
+    }
+    return { task, taskText, taskFile, targetPath, exists: Boolean(existing) };
+  });
+  for (const item of prepared) current.entries[item.task.schedule.date] = calendarEntry(item.task, item.taskText);
+  current.entries = Object.fromEntries(Object.entries(current.entries).sort(([a], [b]) => a.localeCompare(b)));
+  validateDotPublicationCalendar(current);
+  for (const item of prepared) validateDotPublicationCalendarTask(current, item.task.schedule.date, item.taskText);
+  // No output is written until every source, daily task, and the merged calendar has passed validation.
+  fs.mkdirSync(directory, { recursive: true });
+  const lockPath = path.join(directory, ".calendar-export.lock");
+  const lock = fs.openSync(lockPath, "wx");
+  try {
+    assert((fs.existsSync(currentPath) ? fs.readFileSync(currentPath, "utf8") : null) === currentBefore,
+      "Calendar changed during export; rerun against the current index");
+    for (const [date, existing] of existingTasks) {
+      assert(fs.readFileSync(path.join(directory, `daily/${date}.json`), "utf8") === existing.text,
+        `Daily task changed during export: ${date}`);
+    }
+    for (const item of prepared) {
+      assert(item.exists ? fs.readFileSync(item.targetPath, "utf8") === item.taskText : !fs.existsSync(item.targetPath),
+        `Daily task changed during export: ${item.task.schedule.date}`);
+    }
+    for (const item of prepared) {
+      if (!item.exists) writeFileAtomically(item.targetPath, item.taskText, { encoding: "utf8" });
+    }
+    writeFileAtomically(currentPath, jsonText(current), { encoding: "utf8" });
+  } finally {
+    fs.closeSync(lock);
+    fs.unlinkSync(lockPath);
+  }
+  return { tasks: prepared.map(({ task }) => task), current, directory, currentFile: "daily/current.json" };
+}
+
+export function exportDotPublication(root, options = {}) {
+  const result = exportDotPublicationCalendar(root, { entries: [options], output: options.output, now: options.now });
+  return { ...result, task: result.tasks[0] };
 }
