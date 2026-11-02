@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "kind": "dot-publication-task",
+  "taskId": "89ae0d3bd0935b46080be7b4f848fddba672e825f447ae2207376f8ea4872a2d",
+  "platform": "douyin",
+  "mode": "publish",
+  "testOnly": false,
+  "status": "blocked",
+  "submitAuthorized": false,
+  "blockedReasons": [
+    "missing-media-url",
+    "external-publication-unverified"
+  ],
+  "generatedAt": "2026-11-02T03:39:20.515Z",
+  "releaseId": "7b850075465f8c886b00b31cefa326e1fb40d83838a2981a0d48beef25e8228f",
+  "renderSha256": "9861fab03c3cf16a635ea907632b0a03a248dfe2cc63e27ab13d1648ba89bb4b",
+  "account": {
+    "id": null,
+    "selection": "managed-by-dot",
+    "mustMatchPublicIdBeforeSubmit": false,
+    "requireSameAccountThroughoutExecution": true
+  },
+  "schedule": {
+    "timeZone": "Asia/Shanghai",
+    "managedBy": "dot",
+    "date": null,
+    "time": null,
+    "notBefore": null,
+    "expiresAt": null
+  },
+  "media": {
+    "url": null,
+    "sha256": "9861fab03c3cf16a635ea907632b0a03a248dfe2cc63e27ab13d1648ba89bb4b",
+    "bytes": 10552673,
+    "width": 720,
+    "height": 960,
+    "durationSeconds": 55.1,
+    "verifyDownloadedHashBeforeUpload": true
+  },
+  "copy": {
+    "title": "有些疲惫，只有夜里才敢承认",
+    "description": "白天照常开会、回消息，只有夜里才敢承认很累。《夜的命名术》让人看见：说出感受不一定立刻解决问题，却能让焦虑有名字，也让下一步慢慢清楚。",
+    "hashtags": [
+      "#夜的命名术",
+      "#会说话的肘子",
+      "#读书",
+      "#情绪共鸣",
+      "#生活感悟"
+    ]
+  },
+  "settings": {
+    "cover": "first-frame",
+    "visibility": "public",
+    "timing": "immediate",
+    "allowDownload": false,
+    "aiGenerated": true,
+    "commercialPromotion": false,
+    "originalDeclaration": false,
+    "monetization": false,
+    "location": ""
+  },
+  "execution": {
+    "method": "dot-computer-use",
+    "officialUploadUrl": "https://creator.douyin.com/creator-micro/content/upload",
+    "officialWorkListUrl": "https://creator.douyin.com/creator-micro/content/manage",
+    "maxPublicationsPerDay": 1,
+    "dailyLimitScope": "account-and-Asia/Shanghai-calendar-date",
+    "requireCurrentManifestMatchBeforeSubmit": true,
+    "requireScheduleWindowBeforeSubmit": false,
+    "requireOfficialListAndPersistentReceiptCheckBeforeUpload": true,
+    "blockIfDailyPublicationOrPriorTaskOutcomeUnknown": true,
+    "requireAllHashtagsSelectedFromOfficialSuggestions": true,
+    "blockPlainOrMismatchedHashtags": true,
+    "requireExactCopyAndSettingsReview": true,
+    "cover": {
+      "source": "video-frame",
+      "frameIndex": 0,
+      "requireVisibleBitmapTitleAndAuthor": true
+    },
+    "finalPublishClicks": 1,
+    "onUncertainSubmission": "Stop. Inspect the official work list and save evidence. Never re-upload or click publish again while the outcome is uncertain.",
+    "onExistingExactTitle": "Do not publish again. Collect official-list evidence and report the existing work for reconciliation.",
+    "retryRequiresAuthoritativeAbsenceAndNewAuthorization": true,
+    "testPackagesAreNeverAuthorization": true
+  },
+  "evidence": {
+    "requiredForPublished": [
+      "taskId",
+      "releaseId",
+      "renderSha256",
+      "accountId",
+      "exactTitle",
+      "officialWorkListUrl",
+      "workIdOrUrl",
+      "submittedState",
+      "verifiedAt",
+      "viewportScreenshot"
+    ],
+    "acceptedSubmittedStates": [
+      "published",
+      "under_review"
+    ],
+    "screenshot": {
+      "fullPage": false,
+      "matchedWorkMustBeVisible": true
+    },
+    "mustReturnEvidenceToUser": true,
+    "chatClaimOrUploadCompletionIsNotProof": true,
+    "missingEvidenceOutcome": "unverified"
+  }
+}

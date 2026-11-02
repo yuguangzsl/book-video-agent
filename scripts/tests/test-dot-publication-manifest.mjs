@@ -58,13 +58,23 @@ try {
   assert.equal(missing.task.submitAuthorized, false);
   assert.equal(missing.task.media.url, null);
   assert.deepEqual(missing.task.blockedReasons, [
-    "missing-media-url", "missing-account-id", "missing-publish-date", "missing-publish-time",
+    "missing-media-url",
   ]);
   for (const key of ["mediaUrl", "accountId", "publishDate", "publishTime"]) {
     const partial = { ...config };
     delete partial[key];
-    assert.equal(buildDotPublicationTask(brief, partial).submitAuthorized, false);
+    assert.equal(buildDotPublicationTask(brief, partial).submitAuthorized, key !== "mediaUrl");
   }
+  const dotManaged = buildDotPublicationTask(brief, { mediaUrl: config.mediaUrl, now });
+  assert.equal(dotManaged.submitAuthorized, true);
+  assert.equal(dotManaged.account.id, null);
+  assert.equal(dotManaged.account.selection, "managed-by-dot");
+  assert.equal(dotManaged.account.mustMatchPublicIdBeforeSubmit, false);
+  assert.equal(dotManaged.account.requireSameAccountThroughoutExecution, true);
+  assert.equal(dotManaged.schedule.managedBy, "dot");
+  assert.equal(dotManaged.schedule.notBefore, null);
+  assert.equal(dotManaged.schedule.expiresAt, null);
+  assert.equal(dotManaged.execution.requireScheduleWindowBeforeSubmit, false);
 
   const ready = exportDotPublication(root, config);
   assert.equal(ready.task.status, "ready");

@@ -68,9 +68,6 @@ export function buildDotPublicationTask(brief, options = {}) {
   const holdReason = optionalText(options.holdReason, "holdReason");
   const blockedReasons = [];
   if (!url) blockedReasons.push("missing-media-url");
-  if (!accountId) blockedReasons.push("missing-account-id");
-  if (!date) blockedReasons.push("missing-publish-date");
-  if (!time) blockedReasons.push("missing-publish-time");
   if (holdReason) blockedReasons.push(holdReason);
   if (brief.queueStatus?.douyin !== "pending") blockedReasons.push("release-not-pending");
   if (options.publicationHistory?.everPublished) blockedReasons.push("release-already-published");
@@ -106,8 +103,9 @@ export function buildDotPublicationTask(brief, options = {}) {
     generatedAt: now.toISOString(),
     releaseId: brief.releaseId,
     renderSha256: brief.renderSha256,
-    account: { id: accountId, mustMatchPublicIdBeforeSubmit: true },
-    schedule: { timeZone: TIME_ZONE, date, time, notBefore, expiresAt },
+    account: { id: accountId, selection: accountId ? "specified-public-id" : "managed-by-dot",
+      mustMatchPublicIdBeforeSubmit: Boolean(accountId), requireSameAccountThroughoutExecution: true },
+    schedule: { timeZone: TIME_ZONE, managedBy: "dot", date, time, notBefore, expiresAt },
     media: {
       url,
       sha256: brief.renderSha256,
@@ -126,7 +124,7 @@ export function buildDotPublicationTask(brief, options = {}) {
       maxPublicationsPerDay: 1,
       dailyLimitScope: "account-and-Asia/Shanghai-calendar-date",
       requireCurrentManifestMatchBeforeSubmit: true,
-      requireScheduleWindowBeforeSubmit: true,
+      requireScheduleWindowBeforeSubmit: Boolean(date),
       requireOfficialListAndPersistentReceiptCheckBeforeUpload: true,
       blockIfDailyPublicationOrPriorTaskOutcomeUnknown: true,
       requireAllHashtagsSelectedFromOfficialSuggestions: true,

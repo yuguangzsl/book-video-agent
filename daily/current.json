@@ -8,8 +8,8 @@
   "timeZone": "Asia/Shanghai",
   "date": null,
   "maxPublicationsPerDay": 1,
-  "taskFile": "tasks/89ae0d3bd0935b46080be7b4f848fddba672e825f447ae2207376f8ea4872a2d/31eb5aa16ed91b0698dbb16c21fbb7f4cd5f281f2462c379d2833741dbb1210b.json",
-  "taskSha256": "31eb5aa16ed91b0698dbb16c21fbb7f4cd5f281f2462c379d2833741dbb1210b",
+  "taskFile": "tasks/89ae0d3bd0935b46080be7b4f848fddba672e825f447ae2207376f8ea4872a2d/0ce103a26a9fa840d34186df17185ffbe13033b2a71c27b1d933266b405884cb.json",
+  "taskSha256": "0ce103a26a9fa840d34186df17185ffbe13033b2a71c27b1d933266b405884cb",
   "task": {
     "schemaVersion": 1,
     "kind": "dot-publication-task",
@@ -21,20 +21,20 @@
     "submitAuthorized": false,
     "blockedReasons": [
       "missing-media-url",
-      "missing-account-id",
-      "missing-publish-date",
-      "missing-publish-time",
       "external-publication-unverified"
     ],
-    "generatedAt": "2026-11-02T03:35:56.793Z",
+    "generatedAt": "2026-11-02T03:39:20.515Z",
     "releaseId": "7b850075465f8c886b00b31cefa326e1fb40d83838a2981a0d48beef25e8228f",
     "renderSha256": "9861fab03c3cf16a635ea907632b0a03a248dfe2cc63e27ab13d1648ba89bb4b",
     "account": {
       "id": null,
-      "mustMatchPublicIdBeforeSubmit": true
+      "selection": "managed-by-dot",
+      "mustMatchPublicIdBeforeSubmit": false,
+      "requireSameAccountThroughoutExecution": true
     },
     "schedule": {
       "timeZone": "Asia/Shanghai",
+      "managedBy": "dot",
       "date": null,
       "time": null,
       "notBefore": null,
@@ -78,7 +78,7 @@
       "maxPublicationsPerDay": 1,
       "dailyLimitScope": "account-and-Asia/Shanghai-calendar-date",
       "requireCurrentManifestMatchBeforeSubmit": true,
-      "requireScheduleWindowBeforeSubmit": true,
+      "requireScheduleWindowBeforeSubmit": false,
       "requireOfficialListAndPersistentReceiptCheckBeforeUpload": true,
       "blockIfDailyPublicationOrPriorTaskOutcomeUnknown": true,
       "requireAllHashtagsSelectedFromOfficialSuggestions": true,
