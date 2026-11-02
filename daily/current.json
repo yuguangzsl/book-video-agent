@@ -38,42 +38,6 @@
       "renderSha256": "0d323291c6f3c22a54b23f27147b301e2b862caffa38dddac092d2a822eca77c",
       "status": "ready",
       "submitAuthorized": true
-    },
-    "2026-11-06": {
-      "taskFile": "daily/2026-11-06.json",
-      "taskSha256": "25d9f6561706f38d8cea5f60a1466749aeacbfd6f5cbf92f1f33fe427734db27",
-      "taskId": "eb9d0a007b9ade580019f8503ad2f4670733db1ad1d47ab18241d9d30ca16f72",
-      "releaseId": "fc3b4761df278ab5c2be7d9e93f44c05f689c076b770d593d2d79c0afc252f02",
-      "renderSha256": "1f4af5a5736e9ba541b71172aad58712857c6c264debf558890ee8933eebe193",
-      "status": "ready",
-      "submitAuthorized": true
-    },
-    "2026-11-07": {
-      "taskFile": "daily/2026-11-07.json",
-      "taskSha256": "01dc28d386cd875dff19770bb61909eea77cd973c78c8ecf072c1ca75847913a",
-      "taskId": "b7f96fc71be745375daeb4533d159c3c663dd2de91b18ca8a06c19b4b1463fec",
-      "releaseId": "34b8a3d01b87272d513e30003925575a54fd7ca3519a90afbd61c8125e501f1e",
-      "renderSha256": "e328594d065bf18b82bea22fb3a9787cf9fa1c90560b1965e798c4c8d4f51452",
-      "status": "ready",
-      "submitAuthorized": true
-    },
-    "2026-11-08": {
-      "taskFile": "daily/2026-11-08.json",
-      "taskSha256": "3cb4eccf388c8f876745c56f6b138286ce815e43203cfc876f510051b6a2bbe9",
-      "taskId": "04227ae5c7062cce953f1af41c5a902c91f702ef3b0088026c9643e756940cd1",
-      "releaseId": "ea200a8ec1362a50f9a2c7052ca635879cc7fdc1782ec7cdbbd9ed72d12fb43e",
-      "renderSha256": "6f7d590d7bf1727e0f0e8582477f8bd1d1651b60b38f4096fe83a125962b791a",
-      "status": "ready",
-      "submitAuthorized": true
-    },
-    "2026-11-09": {
-      "taskFile": "daily/2026-11-09.json",
-      "taskSha256": "eccb11fcd8507ae2ffdc4612121dbd4c8a0df21c2de4d6cf5314c35ad1ef02f8",
-      "taskId": "db7c7851066093f0fb50f971a8a90e992f1d6e01f453df6f3ad0a213b00b8c4a",
-      "releaseId": "f01ce25ab466fa1a322e72a150276f66406c38592e25b12d9713182611512ec3",
-      "renderSha256": "359999d82723d5c8ccbad04431405bb0589c5b690584776c9e6c6e30a5cf625a",
-      "status": "ready",
-      "submitAuthorized": true
     }
   }
 }
