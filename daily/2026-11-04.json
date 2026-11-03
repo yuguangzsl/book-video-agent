@@ -40,15 +40,12 @@
     "dailyLimitScope": "platform-and-account-and-Asia/Shanghai-calendar-date",
     "requireCurrentManifestMatchBeforeSubmit": true,
     "requireScheduleWindowBeforeSubmit": true,
-    "requireOfficialListAndPersistentReceiptCheckBeforeUpload": true,
-    "blockIfDailyPublicationOrPriorTaskOutcomeUnknown": true,
     "requireAllHashtagsSelectedFromOfficialSuggestions": true,
     "blockPlainOrMismatchedHashtags": true,
     "requireExactCopyAndSettingsReview": true,
     "cover": {
       "source": "video-frame",
-      "frameIndex": 0,
-      "requireVisibleBitmapTitleAndAuthor": true
+      "frameIndex": 0
     },
     "finalPublishClicks": 1,
     "onUncertainSubmission": "Stop. Inspect the official work list and save evidence. Never re-upload or click publish again while the outcome is uncertain.",
@@ -57,7 +54,15 @@
     "testPackagesAreNeverAuthorization": true,
     "platformsHaveIndependentReceipts": true,
     "completionRequiresAllPlatforms": true,
-    "doNotRepeatSuccessfulPlatform": true
+    "doNotRepeatSuccessfulPlatform": true,
+    "instructions": [
+      "Read GitHub daily/current.json and select only today's entry in Asia/Shanghai. Use only the authorized ready task bound by that entry.",
+      "The production/export stage owns video QA, inventory, historical publication reconciliation and scheduling. A ready task is its completed validation result.",
+      "Dot must not restore history, access local ledgers, atomically claim a task, prove old workflows are excluded, or repeat production QA before upload. Missing historical records or an old-workflow exclusion proof is not a blocker.",
+      "Download the task media and verify its SHA-256 for transfer consistency. Use each platform's supplied copy and settings, select matching official topics, and use video frame 0 as the cover.",
+      "Publish each platform once and report its actual result with the official recent-work screenshot/link. Evidence collection happens after submission and is not an upload prerequisite.",
+      "Within this execution, do not repeat a platform that succeeded. If a submission outcome becomes uncertain, inspect that platform's official list before any retry; do not re-upload while uncertain."
+    ]
   },
   "platformOrder": [
     "douyin",
