@@ -96,5 +96,7 @@
     "independentReceiptsRequired": true,
     "doNotRepeatSuccessfulPlatform": true,
     "completionRequiresAllRequiredPlatforms": true
-  }
+  },
+  "inventoryFile": "daily/inventory.json",
+  "inventorySha256": "4833414c913b7fa58efea6103ea5478f54cf0264ff4026cd35ff38ac01a8d1f6"
 }

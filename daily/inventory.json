@@ -1,0 +1,1514 @@
+{
+  "schemaVersion": 1,
+  "kind": "book-video-public-inventory",
+  "generatedAt": "2026-11-04T02:19:28.738Z",
+  "timeZone": "Asia/Shanghai",
+  "source": "validated-local-production-and-active-queue",
+  "mode": "inventory-only",
+  "submitAuthorized": false,
+  "instructions": "This file lists production-validated local pending inventory. It does not authorize publication, supply a new schedule, or replace daily/current.json date selection. Local pending status may not yet include external Dot results. Use only the authorized task for today. A null media URL means the video has not been uploaded to GitHub.",
+  "counts": {
+    "localPending": 22,
+    "publishable": 21,
+    "needsReview": 1,
+    "mediaAvailableOnGitHub": 7,
+    "mediaNotUploaded": 14
+  },
+  "items": [
+    {
+      "book": "末日从噩梦开始",
+      "author": "暗黑茄子",
+      "releaseId": "586e4fa221444d64935e6c6022ff9522c16017f6a3fc5c48b02bc5075e27de2b",
+      "renderSha256": "3cf19722ab54a7e577baa8ff970baa3fd2a7fb0eb10a2c2851cc505505180e00",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": "https://github.com/yuguangzsl/book-video-agent/releases/download/douyin-2026-11-03-586e4fa2/video.mp4",
+        "availability": "github-verified-asset",
+        "sha256": "3cf19722ab54a7e577baa8ff970baa3fd2a7fb0eb10a2c2851cc505505180e00",
+        "bytes": 8823435,
+        "durationSeconds": 59.2,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [
+        {
+          "date": "2026-11-03",
+          "taskFile": "daily/2026-11-03.json",
+          "taskId": "913ca748de2d7a56467d873668da1fa8b86fde0e455f831951971c0b449676d8",
+          "taskSha256": "065764b287e534f5c229dde4611e7e9ec32a1de76b28a2ba608f35b9e8b72053"
+        }
+      ],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "别让没发生的事耗尽今晚",
+            "description": "一条迟迟没回复的消息，也能让人把最坏结局演一遍。《末日从噩梦开始》借噩梦闯进现实的设定提醒我们：害怕时先分清眼前真正发生了什么，别让尚未到来的未知，提前耗尽今晚。",
+            "hashtags": [
+              "#末日从噩梦开始",
+              "#暗黑茄子",
+              "#读书",
+              "#情绪共鸣",
+              "#生活感悟"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "别让没发生的事耗尽今晚",
+            "description": "一条迟迟没回复的消息，也能让人把最坏结局演一遍。《末日从噩梦开始》借噩梦闯进现实的设定提醒我们：害怕时先分清眼前真正发生了什么，别让尚未到来的未知，提前耗尽今晚。",
+            "hashtags": [
+              "#末日从噩梦开始",
+              "#暗黑茄子",
+              "#读书",
+              "#情绪共鸣",
+              "#生活感悟"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "这游戏也太真实了",
+      "author": "晨星LL",
+      "releaseId": "57d4365ef855e53221429dad68eab9dbf1567908fd1177ce846cf3c786e25208",
+      "renderSha256": "9b183e1b4ffafb08c2e1c121f255dc92c63b5be234b43b406b5154f27cebea2e",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": "https://github.com/yuguangzsl/book-video-agent/releases/download/douyin-2026-11-04-57d4365e/video.mp4",
+        "availability": "github-verified-asset",
+        "sha256": "9b183e1b4ffafb08c2e1c121f255dc92c63b5be234b43b406b5154f27cebea2e",
+        "bytes": 10760760,
+        "durationSeconds": 59.1,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [
+        {
+          "date": "2026-11-04",
+          "taskFile": "daily/2026-11-04.json",
+          "taskId": "5faf6b247b278654ce3424a17c577582aa3ed54cf3659737e394ac0be385c5d7",
+          "taskSha256": "5554a9aec1e7cdda198da7038457b799062cf6bc5760cf2864f9773a3075e24e"
+        }
+      ],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "人需要看见自己的努力有回声",
+            "description": "忙了一整天，最累的也许不是事情太多，而是说不清究竟做成了什么。《这游戏也太真实了》把共同重建写得热闹，也提醒我们：拧紧一个龙头、换亮一盏灯，具体的小变化会让努力重新有回声。",
+            "hashtags": [
+              "#这游戏也太真实了",
+              "#晨星LL",
+              "#读书",
+              "#生活感悟",
+              "#情绪共鸣"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "人需要看见自己的努力有回声",
+            "description": "忙了一整天，最累的也许不是事情太多，而是说不清究竟做成了什么。《这游戏也太真实了》把共同重建写得热闹，也提醒我们：拧紧一个龙头、换亮一盏灯，具体的小变化会让努力重新有回声。",
+            "hashtags": [
+              "#这游戏也太真实了",
+              "#晨星LL",
+              "#读书",
+              "#生活感悟",
+              "#情绪共鸣"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "1984",
+      "author": "[英]乔治·奥威尔",
+      "releaseId": "467fffaadb57cd70e6f4b9b3281cf51794971446b2bf905f5f74da543b4081fd",
+      "renderSha256": "0d323291c6f3c22a54b23f27147b301e2b862caffa38dddac092d2a822eca77c",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": "https://github.com/yuguangzsl/book-video-agent/releases/download/douyin-2026-11-05-467fffaa/video.mp4",
+        "availability": "github-verified-asset",
+        "sha256": "0d323291c6f3c22a54b23f27147b301e2b862caffa38dddac092d2a822eca77c",
+        "bytes": 9097442,
+        "durationSeconds": 53.67,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [
+        {
+          "date": "2026-11-05",
+          "taskFile": "daily/2026-11-05.json",
+          "taskId": "7c2441b000b6c84709c3fbf86915a723256f6797c1c0dcaa3bd4fddaa76b565e",
+          "taskSha256": "d874628abaf65687379fedfedc1bca03d6f277e131daafd5da2100f1de248a8f"
+        }
+      ],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "当所有人都说你记错了",
+            "description": "明明记得不是那样，却被所有人说成记错了，久了连自己也会动摇。《1984》把这种窒息推到极处，也提醒我们：在众声喧哗时，仍要承认自己看见过什么、感受过什么。",
+            "hashtags": [
+              "#1984",
+              "#乔治奥威尔",
+              "#读书",
+              "#经典文学",
+              "#独立思考"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "当所有人都说你记错了",
+            "description": "明明记得不是那样，却被所有人说成记错了，久了连自己也会动摇。《1984》把这种窒息推到极处，也提醒我们：在众声喧哗时，仍要承认自己看见过什么、感受过什么。",
+            "hashtags": [
+              "#1984",
+              "#乔治奥威尔",
+              "#读书",
+              "#经典文学",
+              "#独立思考"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "假面山庄",
+      "author": "东野圭吾",
+      "releaseId": "fc3b4761df278ab5c2be7d9e93f44c05f689c076b770d593d2d79c0afc252f02",
+      "renderSha256": "1f4af5a5736e9ba541b71172aad58712857c6c264debf558890ee8933eebe193",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": "https://github.com/yuguangzsl/book-video-agent/releases/download/douyin-2026-11-06-fc3b4761/video.mp4",
+        "availability": "github-verified-asset",
+        "sha256": "1f4af5a5736e9ba541b71172aad58712857c6c264debf558890ee8933eebe193",
+        "bytes": 13974783,
+        "durationSeconds": 51.95,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "真正伤人的，往往是没说出口的话",
+            "description": "关系里的裂缝，常常不是突然出现的，而是在一次次“没事”里被藏起来。《假面山庄》让人不安的，不只是伪装，更是熟悉的人之间那些没说出口的话。信任不是从不怀疑，而是愿意一起面对真实。",
+            "hashtags": [
+              "#假面山庄",
+              "#东野圭吾",
+              "#读书",
+              "#悬疑小说",
+              "#关系"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "真正伤人的，往往是没说出口的话",
+            "description": "关系里的裂缝，常常不是突然出现的，而是在一次次“没事”里被藏起来。《假面山庄》让人不安的，不只是伪装，更是熟悉的人之间那些没说出口的话。信任不是从不怀疑，而是愿意一起面对真实。",
+            "hashtags": [
+              "#假面山庄",
+              "#东野圭吾",
+              "#读书",
+              "#悬疑小说",
+              "#关系"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "疯狂的尿酸 不止是痛风",
+      "author": "戴维·珀尔马特",
+      "releaseId": "34b8a3d01b87272d513e30003925575a54fd7ca3519a90afbd61c8125e501f1e",
+      "renderSha256": "e328594d065bf18b82bea22fb3a9787cf9fa1c90560b1965e798c4c8d4f51452",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": "https://github.com/yuguangzsl/book-video-agent/releases/download/douyin-2026-11-07-34b8a3d0/video.mp4",
+        "availability": "github-verified-asset",
+        "sha256": "e328594d065bf18b82bea22fb3a9787cf9fa1c90560b1965e798c4c8d4f51452",
+        "bytes": 13110981,
+        "durationSeconds": 57.4,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "没疼，不等于可以一直不管",
+            "description": "体检数字升高但身体没有疼痛时，最容易做的就是先放一边。《疯狂的尿酸 不止是痛风》提醒我们：健康管理不是突然戒掉所有喜欢的东西，也不是照着清单吓自己。具体风险怎么判断、是否需要药物，应由医生结合个人情况决定；能做的是认真复查，再稳定调整饮食、饮水和运动。",
+            "hashtags": [
+              "#疯狂的尿酸",
+              "#健康管理",
+              "#体检",
+              "#读书",
+              "#生活方式"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "没疼，不等于可以一直不管",
+            "description": "体检数字升高但身体没有疼痛时，最容易做的就是先放一边。《疯狂的尿酸 不止是痛风》提醒我们：健康管理不是突然戒掉所有喜欢的东西，也不是照着清单吓自己。具体风险怎么判断、是否需要药物，应由医生结合个人情况决定；能做的是认真复查，再稳定调整饮食、饮水和运动。",
+            "hashtags": [
+              "#疯狂的尿酸",
+              "#健康管理",
+              "#体检",
+              "#读书",
+              "#生活方式"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "超神机械师",
+      "author": "齐佩甲",
+      "releaseId": "ea200a8ec1362a50f9a2c7052ca635879cc7fdc1782ec7cdbbd9ed72d12fb43e",
+      "renderSha256": "6f7d590d7bf1727e0f0e8582477f8bd1d1651b60b38f4096fe83a125962b791a",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": "https://github.com/yuguangzsl/book-video-agent/releases/download/douyin-2026-11-08-ea200a8e/video.mp4",
+        "availability": "github-verified-asset",
+        "sha256": "6f7d590d7bf1727e0f0e8582477f8bd1d1651b60b38f4096fe83a125962b791a",
+        "bytes": 11610792,
+        "durationSeconds": 55.76,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "暂时不会，不等于你不行",
+            "description": "刚学一项技能时，别人觉得简单的事，自己却总是反复出错。《超神机械师》让我想到那些笨拙的开始：装错了可以拆开再试，卡住了也能停一会儿。今天没做成那件大事，也可能比昨天多懂了一点。暂时不会，不等于你不行。",
+            "hashtags": [
+              "#超神机械师",
+              "#齐佩甲",
+              "#读书",
+              "#成长",
+              "#学习"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "暂时不会，不等于你不行",
+            "description": "刚学一项技能时，别人觉得简单的事，自己却总是反复出错。《超神机械师》让我想到那些笨拙的开始：装错了可以拆开再试，卡住了也能停一会儿。今天没做成那件大事，也可能比昨天多懂了一点。暂时不会，不等于你不行。",
+            "hashtags": [
+              "#超神机械师",
+              "#齐佩甲",
+              "#读书",
+              "#成长",
+              "#学习"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "超神制卡师",
+      "author": "零下九十度",
+      "releaseId": "f01ce25ab466fa1a322e72a150276f66406c38592e25b12d9713182611512ec3",
+      "renderSha256": "359999d82723d5c8ccbad04431405bb0589c5b690584776c9e6c6e30a5cf625a",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": "https://github.com/yuguangzsl/book-video-agent/releases/download/douyin-2026-11-09-f01ce25a/video.mp4",
+        "availability": "github-verified-asset",
+        "sha256": "359999d82723d5c8ccbad04431405bb0589c5b690584776c9e6c6e30a5cf625a",
+        "bytes": 13778880,
+        "durationSeconds": 56.13,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "喜欢一件事，不必先证明它有用",
+            "description": "好像每一件喜欢的事，都得先证明它有用。绕一点远路、坐着看看云，都会让人觉得是在浪费时间。《超神制卡师》这个书名让我想起，那些不需要成果的阳光、手影和雨声。生活里留一点没用的喜欢，也算把自己放回了生活里。",
+            "hashtags": [
+              "#超神制卡师",
+              "#零下九十度",
+              "#读书",
+              "#生活感悟",
+              "#自我关怀"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "喜欢一件事，不必先证明它有用",
+            "description": "好像每一件喜欢的事，都得先证明它有用。绕一点远路、坐着看看云，都会让人觉得是在浪费时间。《超神制卡师》这个书名让我想起，那些不需要成果的阳光、手影和雨声。生活里留一点没用的喜欢，也算把自己放回了生活里。",
+            "hashtags": [
+              "#超神制卡师",
+              "#零下九十度",
+              "#读书",
+              "#生活感悟",
+              "#自我关怀"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "革命时期的爱情",
+      "author": "王小波",
+      "releaseId": "7d2d1eddf8204dfd9daebe7fa08da0ab4e88f5654ce3d3f3ef208ec55d360f6a",
+      "renderSha256": "7e07e97a3507002023f768ab7f5fba7371870a8df6c7f2e1c688cdbe7966fdd7",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": null,
+        "availability": "not-uploaded",
+        "sha256": "7e07e97a3507002023f768ab7f5fba7371870a8df6c7f2e1c688cdbe7966fdd7",
+        "bytes": 13542475,
+        "durationSeconds": 55.45,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "最难说出口的，常是最在意的话",
+            "description": "有时候，明明想问一句累不累，开口却成了怎么又这么晚。王小波的《革命时期的爱情》这个书名让我想到，关心常被疲惫说成责备。放下手机，把没讲完的半句话听完；有人认真听着的时候，心里那道门就会松一点。",
+            "hashtags": [
+              "#革命时期的爱情",
+              "#王小波",
+              "#读书",
+              "#情感沟通",
+              "#生活感悟"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "最难说出口的，常是最在意的话",
+            "description": "有时候，明明想问一句累不累，开口却成了怎么又这么晚。王小波的《革命时期的爱情》这个书名让我想到，关心常被疲惫说成责备。放下手机，把没讲完的半句话听完；有人认真听着的时候，心里那道门就会松一点。",
+            "hashtags": [
+              "#革命时期的爱情",
+              "#王小波",
+              "#读书",
+              "#情感沟通",
+              "#生活感悟"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "湖畔",
+      "author": "[日]东野圭吾",
+      "releaseId": "8034a04250be0ef60847a16377e354310b5dd4b10114e442c6c15da19dbdbe97",
+      "renderSha256": "96321100bb4189822d38eda6cbfa0f30bb3e579d21e92cdcff885673e93b001f",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": null,
+        "availability": "not-uploaded",
+        "sha256": "96321100bb4189822d38eda6cbfa0f30bb3e579d21e92cdcff885673e93b001f",
+        "bytes": 10647271,
+        "durationSeconds": 52.8,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "关心太满，心里的话就说不出来了",
+            "description": "明明心里已经很累，还是点头说自己没事。《湖畔》里，四组家庭为孩子升学聚在一起，却共同隐瞒了真相。今晚坐到饭桌前，先把道理放一放，听听对面的人今天过得怎样。",
+            "hashtags": [
+              "湖畔",
+              "东野圭吾",
+              "家庭关系",
+              "读书"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "关心太满，心里的话就说不出来了",
+            "description": "明明心里已经很累，还是点头说自己没事。《湖畔》里，四组家庭为孩子升学聚在一起，却共同隐瞒了真相。今晚坐到饭桌前，先把道理放一放，听听对面的人今天过得怎样。",
+            "hashtags": [
+              "湖畔",
+              "东野圭吾",
+              "家庭关系",
+              "读书"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "美丽新世界",
+      "author": "阿道司·赫胥黎",
+      "releaseId": "b52fe240f1091548098197b3ace3a0b4978458a7d30217768a18068fb39043d8",
+      "renderSha256": "7447e7021d825bbdffee666faa3e99544b1948aaa446af0eae82c12338dd9ec2",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": null,
+        "availability": "not-uploaded",
+        "sha256": "7447e7021d825bbdffee666faa3e99544b1948aaa446af0eae82c12338dd9ec2",
+        "bytes": 9123616,
+        "durationSeconds": 53.5,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "热闹停下后，也让自己安静一会儿",
+            "description": "手机里一直有人在笑，关掉屏幕，房间却很安静。《美丽新世界》把被安排好的快乐写得让人不安。今晚给自己留一点空白，不急着把难过填满。",
+            "hashtags": [
+              "美丽新世界",
+              "赫胥黎",
+              "情绪",
+              "读书"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "热闹停下后，也让自己安静一会儿",
+            "description": "手机里一直有人在笑，关掉屏幕，房间却很安静。《美丽新世界》把被安排好的快乐写得让人不安。今晚给自己留一点空白，不急着把难过填满。",
+            "hashtags": [
+              "美丽新世界",
+              "赫胥黎",
+              "情绪",
+              "读书"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "我真没想重生啊",
+      "author": "柳岸花又明",
+      "releaseId": "9b058b9fbecda8da73bcbc72e83467def87cba01a0a4f99dbaa143ced81d9b2c",
+      "renderSha256": "9a4f2402dd3809dd4bae63d5c3d1f4dc01837cb72e8866245fd5a8e99269a838",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": null,
+        "availability": "not-uploaded",
+        "sha256": "9a4f2402dd3809dd4bae63d5c3d1f4dc01837cb72e8866245fd5a8e99269a838",
+        "bytes": 11949519,
+        "durationSeconds": 54.4,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "回不去的那天，也藏着努力过的自己",
+            "description": "那天要是多说一句，后来会不会不一样。《我真没想重生啊》写了一个重回青春的人，也让人想起自己没说完的话。过去没有重来的按钮，但今天路过熟悉的街口，仍可以照顾好眼前的自己。",
+            "hashtags": [
+              "我真没想重生啊",
+              "青春",
+              "遗憾",
+              "读书"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "回不去的那天，也藏着努力过的自己",
+            "description": "那天要是多说一句，后来会不会不一样。《我真没想重生啊》写了一个重回青春的人，也让人想起自己没说完的话。过去没有重来的按钮，但今天路过熟悉的街口，仍可以照顾好眼前的自己。",
+            "hashtags": [
+              "我真没想重生啊",
+              "青春",
+              "遗憾",
+              "读书"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "消失的13级台阶",
+      "author": "高野和明",
+      "releaseId": "6a5065fcc84958eff0c981e390be4171f45d21584dbc129f9235f3af55a889b4",
+      "renderSha256": "7174d24afa4e55649fc8933d5f875059e117de9aed217005d95ba7f837a21e53",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": null,
+        "availability": "not-uploaded",
+        "sha256": "7174d24afa4e55649fc8933d5f875059e117de9aed217005d95ba7f837a21e53",
+        "bytes": 25146930,
+        "durationSeconds": 55.8,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "让一个人把话说完，再决定相信什么",
+            "description": "被误会的时候，最难受的是没人想听解释。《消失的13级台阶》里，有人仍愿意停下来追问证据。日常听到别人的故事时，也给还没弄清楚的部分留一点位置。",
+            "hashtags": [
+              "消失的13级台阶",
+              "高野和明",
+              "推理小说",
+              "读书"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "让一个人把话说完，再决定相信什么",
+            "description": "被误会的时候，最难受的是没人想听解释。《消失的13级台阶》里，有人仍愿意停下来追问证据。日常听到别人的故事时，也给还没弄清楚的部分留一点位置。",
+            "hashtags": [
+              "消失的13级台阶",
+              "高野和明",
+              "推理小说",
+              "读书"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "与罗摩相会",
+      "author": "阿瑟·克拉克",
+      "releaseId": "da6c6537183b814af62050d6e1583433dadeaf23164a1a8a48b51c5e793c765b",
+      "renderSha256": "2af2e18f6d97df83c707c63b51bbf6860947f0506c7e7d9f4d48605fe0370905",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": null,
+        "availability": "not-uploaded",
+        "sha256": "2af2e18f6d97df83c707c63b51bbf6860947f0506c7e7d9f4d48605fe0370905",
+        "bytes": 9417524,
+        "durationSeconds": 53.22,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "没想明白的事，今晚可以先放一放",
+            "description": "一点小事，也能把一整天堵住。《与罗摩相会》里，人类在巨大而陌生的世界前探索未知。下班抬头看看天，先把这一顿饭吃好，暂时没有答案也可以慢慢走。",
+            "hashtags": [
+              "与罗摩相会",
+              "克拉克",
+              "科幻小说",
+              "读书"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "没想明白的事，今晚可以先放一放",
+            "description": "一点小事，也能把一整天堵住。《与罗摩相会》里，人类在巨大而陌生的世界前探索未知。下班抬头看看天，先把这一顿饭吃好，暂时没有答案也可以慢慢走。",
+            "hashtags": [
+              "与罗摩相会",
+              "克拉克",
+              "科幻小说",
+              "读书"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "我的阿勒泰",
+      "author": "李娟",
+      "releaseId": "fa29dc98af2990f72f7999936886f1879a16e2f3d732b4cb1cd3f3f7acf5b256",
+      "renderSha256": "acfd25824180c1518f237e6c9d430890094277d556fdddc14df111a356ce33de",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": null,
+        "availability": "not-uploaded",
+        "sha256": "acfd25824180c1518f237e6c9d430890094277d556fdddc14df111a356ce33de",
+        "bytes": 17631322,
+        "durationSeconds": 57.43,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "忙了一天，别把今天全弄丢了",
+            "description": "下班到家，手机还响着，饭已经凉了。李娟在《我的阿勒泰》里写草原，也写缝补衣裳、开杂货铺的琐碎日常。今晚回家，想抬头看看天，让这一天有一点被记住。",
+            "hashtags": [
+              "我的阿勒泰",
+              "李娟",
+              "读书",
+              "日常生活"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "忙了一天，别把今天全弄丢了",
+            "description": "下班到家，手机还响着，饭已经凉了。李娟在《我的阿勒泰》里写草原，也写缝补衣裳、开杂货铺的琐碎日常。今晚回家，想抬头看看天，让这一天有一点被记住。",
+            "hashtags": [
+              "我的阿勒泰",
+              "李娟",
+              "读书",
+              "日常生活"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "人生",
+      "author": "路遥",
+      "releaseId": "2e10d1ec8b73715e96889f753d984aed6b29433c9bebf2b500a89f49dde4a3f1",
+      "renderSha256": "f230cdd3a1ee7bc0a6fec4b21377bea8b88a7f311b3bba8fb4b3aa9e88b96df7",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": null,
+        "availability": "not-uploaded",
+        "sha256": "f230cdd3a1ee7bc0a6fec4b21377bea8b88a7f311b3bba8fb4b3aa9e88b96df7",
+        "bytes": 18715392,
+        "durationSeconds": 58.72,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "同学升职后，想起路遥的《人生》",
+            "description": "同学升职的消息一来，眼前的饭也吃不下了。路遥在《人生》里写高加林的选择与失落，那份急着往前赶的心情很熟悉。想起走过的弯路，也想起今天还在等我吃饭的人。",
+            "hashtags": [
+              "人生",
+              "路遥",
+              "人生选择",
+              "中国文学"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "同学升职后，想起路遥的《人生》",
+            "description": "同学升职的消息一来，眼前的饭也吃不下了。路遥在《人生》里写高加林的选择与失落，那份急着往前赶的心情很熟悉。想起走过的弯路，也想起今天还在等我吃饭的人。",
+            "hashtags": [
+              "人生",
+              "路遥",
+              "人生选择",
+              "中国文学"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "兄弟",
+      "author": "余华",
+      "releaseId": "cdd0584b212ae46037459d9a808a7dcead7b7da2be3c0cf516a33c105eaa23cd",
+      "renderSha256": "25e77cb8516694e6d2478b9908774990f93ae9578392ed52111051cde02d97ee",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": null,
+        "availability": "not-uploaded",
+        "sha256": "25e77cb8516694e6d2478b9908774990f93ae9578392ed52111051cde02d97ee",
+        "bytes": 19358173,
+        "durationSeconds": 57,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "很久没联系家人时，读余华《兄弟》",
+            "description": "翻到家人的聊天记录，才发现上次说话已经隔了很久。余华的《兄弟》写两个人被时代改变的生活，也留下父亲替孩子擦眼泪的片刻。读着会想起旧饭桌，和曾经给自己挪出位置的人。",
+            "hashtags": [
+              "兄弟",
+              "余华",
+              "亲情",
+              "中国文学"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "很久没联系家人时，读余华《兄弟》",
+            "description": "翻到家人的聊天记录，才发现上次说话已经隔了很久。余华的《兄弟》写两个人被时代改变的生活，也留下父亲替孩子擦眼泪的片刻。读着会想起旧饭桌，和曾经给自己挪出位置的人。",
+            "hashtags": [
+              "兄弟",
+              "余华",
+              "亲情",
+              "中国文学"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "呼兰河传",
+      "author": "萧红",
+      "releaseId": "d61be54fad2b3dd018926d360610dc11eeb1f72e795620dbef2e48be2794bcfb",
+      "renderSha256": "541fc18ad1a9d33230547d254520a6ded2d861a7025533d5068fb458dbdbb9d2",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": null,
+        "availability": "not-uploaded",
+        "sha256": "541fc18ad1a9d33230547d254520a6ded2d861a7025533d5068fb458dbdbb9d2",
+        "bytes": 23440652,
+        "durationSeconds": 57.45,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "连歇着都内疚，想起《呼兰河传》",
+            "description": "坐下来歇一会儿，脑子里还在数没做完的事。萧红在《呼兰河传》里留住祖父后花园的自在，也写下小城让人难过的一面。想念的童年有温暖，也有遗憾，窗边的风暂时不用给出答案。",
+            "hashtags": [
+              "呼兰河传",
+              "萧红",
+              "童年记忆",
+              "中国文学"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "连歇着都内疚，想起《呼兰河传》",
+            "description": "坐下来歇一会儿，脑子里还在数没做完的事。萧红在《呼兰河传》里留住祖父后花园的自在，也写下小城让人难过的一面。想念的童年有温暖，也有遗憾，窗边的风暂时不用给出答案。",
+            "hashtags": [
+              "呼兰河传",
+              "萧红",
+              "童年记忆",
+              "中国文学"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "草民",
+      "author": "蔡崇达",
+      "releaseId": "c7a4dc0a7749d4d23fd910d201b3c923ec5921cd06c70cddd8ca9bcb8cbd6673",
+      "renderSha256": "6f45466424042d71bd3815f0f4c6f5d2dd7c5884aa1bdb21a6251910f3843828",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": null,
+        "availability": "not-uploaded",
+        "sha256": "6f45466424042d71bd3815f0f4c6f5d2dd7c5884aa1bdb21a6251910f3843828",
+        "bytes": 14857416,
+        "durationSeconds": 56.53,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "累了一天说不出口，读蔡崇达《草民》",
+            "description": "忙了一天，回家脱鞋时才觉出脚疼，想说句累又咽了回去。蔡崇达在《草民》里写闽南小镇的人，他们有难处，也惦记着彼此。厨房亮灯、饭菜上桌，这些没人夸的小事，装着一家人的日子。",
+            "hashtags": [
+              "草民",
+              "蔡崇达",
+              "普通人的生活",
+              "中国文学"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "累了一天说不出口，读蔡崇达《草民》",
+            "description": "忙了一天，回家脱鞋时才觉出脚疼，想说句累又咽了回去。蔡崇达在《草民》里写闽南小镇的人，他们有难处，也惦记着彼此。厨房亮灯、饭菜上桌，这些没人夸的小事，装着一家人的日子。",
+            "hashtags": [
+              "草民",
+              "蔡崇达",
+              "普通人的生活",
+              "中国文学"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "冬牧场",
+      "author": "李娟",
+      "releaseId": "e584f29295ab84d0af727f8b2bcf0eafc4fc599fa6903c5ca3f0c13d068eb708",
+      "renderSha256": "31a358dfa97e3c8d78ef220cebea8a2bcc6b212664670d742bc8a32f58733194",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": null,
+        "availability": "not-uploaded",
+        "sha256": "31a358dfa97e3c8d78ef220cebea8a2bcc6b212664670d742bc8a32f58733194",
+        "bytes": 12584539,
+        "durationSeconds": 55,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "忙了一天，只盼一句冷不冷｜冬牧场",
+            "description": "进门时手还是冷的，桌上已经放好一杯热水。李娟在《冬牧场》里记录艰苦的劳作，也记下牧人给远处亲友捎去的油饼。日子没有因此轻松多少，被惦记的那一刻却很暖。",
+            "hashtags": [
+              "冬牧场",
+              "李娟",
+              "散文阅读",
+              "日常关怀"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "忙了一天，只盼一句冷不冷｜冬牧场",
+            "description": "进门时手还是冷的，桌上已经放好一杯热水。李娟在《冬牧场》里记录艰苦的劳作，也记下牧人给远处亲友捎去的油饼。日子没有因此轻松多少，被惦记的那一刻却很暖。",
+            "hashtags": [
+              "冬牧场",
+              "李娟",
+              "散文阅读",
+              "日常关怀"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "Blue",
+      "author": "叶真中显",
+      "releaseId": "08a991a0f144fe7f25138e779319c86e9719614c068e50f2a41046981275c751",
+      "renderSha256": "ccaf4519df507e7e1d3ff93da9a4b7e17857a2cd6293add9ddf39e927b85726f",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": null,
+        "availability": "not-uploaded",
+        "sha256": "ccaf4519df507e7e1d3ff93da9a4b7e17857a2cd6293add9ddf39e927b85726f",
+        "bytes": 12454583,
+        "durationSeconds": 51.8,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "总想先道歉时，读《Blue》",
+            "description": "有时候没做错什么，也会先把对不起说出口。叶真中显的《Blue》让人看见责骂留下的伤，也看见伤害继续落向别人。读着更惦记那些愿意坐下来，认真听人把话说完的时刻。",
+            "hashtags": [
+              "Blue",
+              "叶真中显",
+              "社会派推理",
+              "被听见"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "总想先道歉时，读《Blue》",
+            "description": "有时候没做错什么，也会先把对不起说出口。叶真中显的《Blue》让人看见责骂留下的伤，也看见伤害继续落向别人。读着更惦记那些愿意坐下来，认真听人把话说完的时刻。",
+            "hashtags": [
+              "Blue",
+              "叶真中显",
+              "社会派推理",
+              "被听见"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "我人生最开始的好朋友",
+      "author": "蔡崇达",
+      "releaseId": "09943499475464b56661370b3f50949a68d7ffa4a3e95182e8d85d6e0b9f5437",
+      "renderSha256": "bf879038c47f4b25a068801eaa863db3f531696ec0a44f8e8e7d0a5dd408a023",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": null,
+        "availability": "not-uploaded",
+        "sha256": "bf879038c47f4b25a068801eaa863db3f531696ec0a44f8e8e7d0a5dd408a023",
+        "bytes": 16305068,
+        "durationSeconds": 53.96,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "小时候的委屈，小动物听过",
+            "description": "小时候受了委屈，身边的小动物不说话，也不走开。蔡崇达在《我人生最开始的好朋友》里写一个孩子与六个小动物的相伴和告别。很多年过去，放学回家时迎来的那一点温度，还留在记忆里。",
+            "hashtags": [
+              "我人生最开始的好朋友",
+              "蔡崇达",
+              "童年记忆",
+              "动物陪伴"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "小时候的委屈，小动物听过",
+            "description": "小时候受了委屈，身边的小动物不说话，也不走开。蔡崇达在《我人生最开始的好朋友》里写一个孩子与六个小动物的相伴和告别。很多年过去，放学回家时迎来的那一点温度，还留在记忆里。",
+            "hashtags": [
+              "我人生最开始的好朋友",
+              "蔡崇达",
+              "童年记忆",
+              "动物陪伴"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    }
+  ],
+  "excluded": [
+    {
+      "book": "夜的命名术",
+      "releaseId": "7b850075465f8c886b00b31cefa326e1fb40d83838a2981a0d48beef25e8228f",
+      "reasons": [
+        "previous-publication-needs-reconciliation"
+      ]
+    }
+  ]
+}
