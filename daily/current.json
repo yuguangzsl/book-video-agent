@@ -35,7 +35,7 @@
     },
     "2026-11-04": {
       "taskFile": "daily/2026-11-04.json",
-      "taskSha256": "b375d117adb451fbfabcb2d97a6bacb1730ec88ac808df060b9e2e4fcd004955",
+      "taskSha256": "5554a9aec1e7cdda198da7038457b799062cf6bc5760cf2864f9773a3075e24e",
       "taskId": "5faf6b247b278654ce3424a17c577582aa3ed54cf3659737e394ac0be385c5d7",
       "releaseId": "57d4365ef855e53221429dad68eab9dbf1567908fd1177ce846cf3c786e25208",
       "renderSha256": "9b183e1b4ffafb08c2e1c121f255dc92c63b5be234b43b406b5154f27cebea2e",
@@ -56,7 +56,7 @@
     },
     "2026-11-05": {
       "taskFile": "daily/2026-11-05.json",
-      "taskSha256": "40c75dfb7528f5ba890f8a730b30b4d39bcf6dfc180b6b378eaf711ec48ad62e",
+      "taskSha256": "d874628abaf65687379fedfedc1bca03d6f277e131daafd5da2100f1de248a8f",
       "taskId": "7c2441b000b6c84709c3fbf86915a723256f6797c1c0dcaa3bd4fddaa76b565e",
       "releaseId": "467fffaadb57cd70e6f4b9b3281cf51794971446b2bf905f5f74da543b4081fd",
       "renderSha256": "0d323291c6f3c22a54b23f27147b301e2b862caffa38dddac092d2a822eca77c",

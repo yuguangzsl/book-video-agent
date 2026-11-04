@@ -104,7 +104,7 @@
         "originalDeclarationMustBeOff": true,
         "finalPublishClicks": 1,
         "onUncertainSubmission": "Stop this platform. Inspect official work/note management before retry. Never re-upload while uncertain.",
-        "onUnsupportedSetting": "Stop this platform and report. Never invent settings or declarations."
+        "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
       },
       "evidence": {
         "requiredForPublished": [
@@ -169,7 +169,7 @@
         "originalDeclarationMustBeOff": true,
         "finalPublishClicks": 1,
         "onUncertainSubmission": "Stop this platform. Inspect official work/note management before retry. Never re-upload while uncertain.",
-        "onUnsupportedSetting": "Stop this platform and report. Never invent settings or declarations."
+        "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
       },
       "evidence": {
         "requiredForPublished": [
