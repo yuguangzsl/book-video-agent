@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
   "kind": "book-video-public-inventory",
-  "generatedAt": "2026-11-05T13:51:17.137Z",
+  "generatedAt": "2026-11-05T14:15:11.736Z",
   "timeZone": "Asia/Shanghai",
   "source": "validated-local-production-and-active-queue",
   "mode": "inventory-only",
   "submitAuthorized": false,
   "instructions": "This file lists production-validated local pending inventory. It does not authorize publication, supply a new schedule, or replace daily/current.json date selection. Local pending status may not yet include external Dot results. Use only the authorized task for today. A null media URL means the video has not been uploaded to GitHub.",
   "counts": {
-    "localPending": 20,
-    "publishable": 20,
+    "localPending": 21,
+    "publishable": 21,
     "needsReview": 0,
     "mediaAvailableOnGitHub": 5,
-    "mediaNotUploaded": 15
+    "mediaNotUploaded": 16
   },
   "items": [
     {
@@ -1397,6 +1397,75 @@
               "李娟",
               "生活随笔",
               "日常小事"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
+    },
+    {
+      "book": "去年天气旧亭台",
+      "author": "叶广芩",
+      "releaseId": "55edef1fa5e27209344e51196dcc050c5d0ea476e6552666b075a28ae61e86da",
+      "renderSha256": "04baf6d70fa7e454ba2a91a8c82abaad7939bb685eab234c7c778846686d24e4",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": null,
+        "availability": "not-uploaded",
+        "sha256": "04baf6d70fa7e454ba2a91a8c82abaad7939bb685eab234c7c778846686d24e4",
+        "bytes": 19869416,
+        "durationSeconds": 55.7,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "回到老地方，想念喊我回家的人",
+            "description": "走回小时候的住处，熟悉的路还在，门里却换了人。叶广芩在小说集《去年天气旧亭台》里，把北京旧建筑和人的故事连在一起。想起那些催过自己回家吃饭的声音，旧称呼仍然很亲。",
+            "hashtags": [
+              "去年天气旧亭台",
+              "叶广芩",
+              "故乡记忆",
+              "北京文学"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "回到老地方，想念喊我回家的人",
+            "description": "走回小时候的住处，熟悉的路还在，门里却换了人。叶广芩在小说集《去年天气旧亭台》里，把北京旧建筑和人的故事连在一起。想起那些催过自己回家吃饭的声音，旧称呼仍然很亲。",
+            "hashtags": [
+              "去年天气旧亭台",
+              "叶广芩",
+              "故乡记忆",
+              "北京文学"
             ]
           },
           "settings": {
