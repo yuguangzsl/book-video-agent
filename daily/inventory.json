@@ -1,176 +1,20 @@
 {
   "schemaVersion": 1,
   "kind": "book-video-public-inventory",
-  "generatedAt": "2026-11-04T02:19:28.738Z",
+  "generatedAt": "2026-11-05T13:51:17.137Z",
   "timeZone": "Asia/Shanghai",
   "source": "validated-local-production-and-active-queue",
   "mode": "inventory-only",
   "submitAuthorized": false,
   "instructions": "This file lists production-validated local pending inventory. It does not authorize publication, supply a new schedule, or replace daily/current.json date selection. Local pending status may not yet include external Dot results. Use only the authorized task for today. A null media URL means the video has not been uploaded to GitHub.",
   "counts": {
-    "localPending": 22,
-    "publishable": 21,
-    "needsReview": 1,
-    "mediaAvailableOnGitHub": 7,
-    "mediaNotUploaded": 14
+    "localPending": 20,
+    "publishable": 20,
+    "needsReview": 0,
+    "mediaAvailableOnGitHub": 5,
+    "mediaNotUploaded": 15
   },
   "items": [
-    {
-      "book": "末日从噩梦开始",
-      "author": "暗黑茄子",
-      "releaseId": "586e4fa221444d64935e6c6022ff9522c16017f6a3fc5c48b02bc5075e27de2b",
-      "renderSha256": "3cf19722ab54a7e577baa8ff970baa3fd2a7fb0eb10a2c2851cc505505180e00",
-      "scriptVersion": "v1",
-      "productionValidated": true,
-      "douyinStatus": "pending",
-      "media": {
-        "url": "https://github.com/yuguangzsl/book-video-agent/releases/download/douyin-2026-11-03-586e4fa2/video.mp4",
-        "availability": "github-verified-asset",
-        "sha256": "3cf19722ab54a7e577baa8ff970baa3fd2a7fb0eb10a2c2851cc505505180e00",
-        "bytes": 8823435,
-        "durationSeconds": 59.2,
-        "width": 720,
-        "height": 960
-      },
-      "existingSchedules": [
-        {
-          "date": "2026-11-03",
-          "taskFile": "daily/2026-11-03.json",
-          "taskId": "913ca748de2d7a56467d873668da1fa8b86fde0e455f831951971c0b449676d8",
-          "taskSha256": "065764b287e534f5c229dde4611e7e9ec32a1de76b28a2ba608f35b9e8b72053"
-        }
-      ],
-      "platforms": {
-        "douyin": {
-          "copy": {
-            "title": "别让没发生的事耗尽今晚",
-            "description": "一条迟迟没回复的消息，也能让人把最坏结局演一遍。《末日从噩梦开始》借噩梦闯进现实的设定提醒我们：害怕时先分清眼前真正发生了什么，别让尚未到来的未知，提前耗尽今晚。",
-            "hashtags": [
-              "#末日从噩梦开始",
-              "#暗黑茄子",
-              "#读书",
-              "#情绪共鸣",
-              "#生活感悟"
-            ]
-          },
-          "settings": {
-            "cover": "first-frame",
-            "visibility": "public",
-            "timing": "immediate",
-            "allowDownload": false,
-            "aiGenerated": true,
-            "commercialPromotion": false,
-            "originalDeclaration": false,
-            "monetization": false,
-            "location": ""
-          },
-          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
-        },
-        "xiaohongshu": {
-          "copy": {
-            "title": "别让没发生的事耗尽今晚",
-            "description": "一条迟迟没回复的消息，也能让人把最坏结局演一遍。《末日从噩梦开始》借噩梦闯进现实的设定提醒我们：害怕时先分清眼前真正发生了什么，别让尚未到来的未知，提前耗尽今晚。",
-            "hashtags": [
-              "#末日从噩梦开始",
-              "#暗黑茄子",
-              "#读书",
-              "#情绪共鸣",
-              "#生活感悟"
-            ]
-          },
-          "settings": {
-            "cover": "first-frame",
-            "visibility": "public",
-            "timing": "immediate",
-            "allowDownload": false,
-            "aiGenerated": true,
-            "commercialPromotion": false,
-            "originalDeclaration": false,
-            "monetization": false,
-            "location": ""
-          },
-          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
-        }
-      }
-    },
-    {
-      "book": "这游戏也太真实了",
-      "author": "晨星LL",
-      "releaseId": "57d4365ef855e53221429dad68eab9dbf1567908fd1177ce846cf3c786e25208",
-      "renderSha256": "9b183e1b4ffafb08c2e1c121f255dc92c63b5be234b43b406b5154f27cebea2e",
-      "scriptVersion": "v1",
-      "productionValidated": true,
-      "douyinStatus": "pending",
-      "media": {
-        "url": "https://github.com/yuguangzsl/book-video-agent/releases/download/douyin-2026-11-04-57d4365e/video.mp4",
-        "availability": "github-verified-asset",
-        "sha256": "9b183e1b4ffafb08c2e1c121f255dc92c63b5be234b43b406b5154f27cebea2e",
-        "bytes": 10760760,
-        "durationSeconds": 59.1,
-        "width": 720,
-        "height": 960
-      },
-      "existingSchedules": [
-        {
-          "date": "2026-11-04",
-          "taskFile": "daily/2026-11-04.json",
-          "taskId": "5faf6b247b278654ce3424a17c577582aa3ed54cf3659737e394ac0be385c5d7",
-          "taskSha256": "5554a9aec1e7cdda198da7038457b799062cf6bc5760cf2864f9773a3075e24e"
-        }
-      ],
-      "platforms": {
-        "douyin": {
-          "copy": {
-            "title": "人需要看见自己的努力有回声",
-            "description": "忙了一整天，最累的也许不是事情太多，而是说不清究竟做成了什么。《这游戏也太真实了》把共同重建写得热闹，也提醒我们：拧紧一个龙头、换亮一盏灯，具体的小变化会让努力重新有回声。",
-            "hashtags": [
-              "#这游戏也太真实了",
-              "#晨星LL",
-              "#读书",
-              "#生活感悟",
-              "#情绪共鸣"
-            ]
-          },
-          "settings": {
-            "cover": "first-frame",
-            "visibility": "public",
-            "timing": "immediate",
-            "allowDownload": false,
-            "aiGenerated": true,
-            "commercialPromotion": false,
-            "originalDeclaration": false,
-            "monetization": false,
-            "location": ""
-          },
-          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
-        },
-        "xiaohongshu": {
-          "copy": {
-            "title": "人需要看见自己的努力有回声",
-            "description": "忙了一整天，最累的也许不是事情太多，而是说不清究竟做成了什么。《这游戏也太真实了》把共同重建写得热闹，也提醒我们：拧紧一个龙头、换亮一盏灯，具体的小变化会让努力重新有回声。",
-            "hashtags": [
-              "#这游戏也太真实了",
-              "#晨星LL",
-              "#读书",
-              "#生活感悟",
-              "#情绪共鸣"
-            ]
-          },
-          "settings": {
-            "cover": "first-frame",
-            "visibility": "public",
-            "timing": "immediate",
-            "allowDownload": false,
-            "aiGenerated": true,
-            "commercialPromotion": false,
-            "originalDeclaration": false,
-            "monetization": false,
-            "location": ""
-          },
-          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
-        }
-      }
-    },
     {
       "book": "1984",
       "author": "[英]乔治·奥威尔",
@@ -1500,15 +1344,76 @@
           "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
         }
       }
+    },
+    {
+      "book": "记一忘三二",
+      "author": "李娟",
+      "releaseId": "e8187b72a744808bff44172a07ad96331a9b4016a2897e8013126f205346c0fe",
+      "renderSha256": "2b5204741674e3b26df2ccecdbab2df1f0fb94d469a536a41cf3e232d12ab4e2",
+      "scriptVersion": "v1",
+      "productionValidated": true,
+      "douyinStatus": "pending",
+      "media": {
+        "url": null,
+        "availability": "not-uploaded",
+        "sha256": "2b5204741674e3b26df2ccecdbab2df1f0fb94d469a536a41cf3e232d12ab4e2",
+        "bytes": 15379591,
+        "durationSeconds": 55.8,
+        "width": 720,
+        "height": 960
+      },
+      "existingSchedules": [],
+      "platforms": {
+        "douyin": {
+          "copy": {
+            "title": "杯子倒了，不必再怪自己｜李娟",
+            "description": "出门忘带东西，又碰倒了水杯，一个早上就开始嫌弃自己。李娟在《记一忘三二》里写生活的窘事，也写没有忘掉的伤。桌上的水擦干了，今天还能坐下来，慢慢喝完这一杯。",
+            "hashtags": [
+              "记一忘三二",
+              "李娟",
+              "生活随笔",
+              "日常小事"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        },
+        "xiaohongshu": {
+          "copy": {
+            "title": "杯子倒了，不必再怪自己｜李娟",
+            "description": "出门忘带东西，又碰倒了水杯，一个早上就开始嫌弃自己。李娟在《记一忘三二》里写生活的窘事，也写没有忘掉的伤。桌上的水擦干了，今天还能坐下来，慢慢喝完这一杯。",
+            "hashtags": [
+              "记一忘三二",
+              "李娟",
+              "生活随笔",
+              "日常小事"
+            ]
+          },
+          "settings": {
+            "cover": "first-frame",
+            "visibility": "public",
+            "timing": "immediate",
+            "allowDownload": false,
+            "aiGenerated": true,
+            "commercialPromotion": false,
+            "originalDeclaration": false,
+            "monetization": false,
+            "location": ""
+          },
+          "onUnsupportedSetting": "If a requested setting has no available control or cannot be configured, keep the platform default and continue publishing without requesting additional confirmation. For that unavailable setting, this fallback takes precedence over its requested value and setting-specific requirements. Report the setting as left at platform default; never claim its requested value was verified."
+        }
+      }
     }
   ],
-  "excluded": [
-    {
-      "book": "夜的命名术",
-      "releaseId": "7b850075465f8c886b00b31cefa326e1fb40d83838a2981a0d48beef25e8228f",
-      "reasons": [
-        "previous-publication-needs-reconciliation"
-      ]
-    }
-  ]
+  "excluded": []
 }
